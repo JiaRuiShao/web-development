@@ -1,0 +1,25 @@
+*.log
+*.pot
+*.pyc
+local_settings.py
+
+# Editor backup files
+*~
+*#
+*.swp
+
+# IDE config files
+.idea
+
+# Virtual Environment Folders
+my_env
+
+# Mac OS data store file
+.DS_Store
+
+# Django's SQL Lite Database File
+db.sqlite3
+
+# Secret key values
+*.ini
+
