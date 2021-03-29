@@ -1,10 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "./base.html" %}
 
-</body>
-</html>
+{% block page-name %}
+<span id="id_page_name">
+    {{ page_name }} Page for {{ user.first_name }} {{ user.last_name }}
+</span>
+{% endblock %}
+
+{% block container %}
+<div class="user-img">
+        {% if profile.picture %}
+            <img src="{% url 'photo' profile.id %}" width="20vw">
+        {% else %}
+            {% load static %}
+            <img src="{% static 'cover.jpg' %}" width="20vw">
+        {% endif %}
+    </div>
+
+    <form enctype="multipart/form-data" method="post" action="{% url 'profile' user.id %}">
+        <div class="user-bio">
+            <label for="id_bio_input_text"></label>
+            <textarea type="text" id="id_bio_input_text" name="bio" maxlength="400">{{ profile.bio }}</textarea>
+            <br/><br/>
+            Profile Picture:
+            <input id="id_profile_picture" type="file" name="picture">
+        </div>
+        <br/>
+        {% csrf_token %}
+        <input type="submit" id="id_update_profile_button" value="Submit">
+    </form>
+
+    <div class="user-following">
+        <br/><br/>You are following:
+        <ul>
+            {% for follower in user.profile_user.following.all %}
+                <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
+                    {{ follower.first_name }} {{ follower.last_name }}</a></li>
+            {% endfor %}
+        </ul>
+
+    </div>
+{% endblock %}

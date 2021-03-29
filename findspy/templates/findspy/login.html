@@ -1,20 +1,38 @@
 {% extends "./base.html" %}
 
+{% block nav-bar %}
+<a class="navbar-brand" class="glyphicon glyphicon-registration-mark" href="{% url 'register' %}">Register</a>
+{% endblock %}
+
 {% block container %}
+<div class="container-fluid text-center" style="padding: 50px 25vw;">
+    <form action="{% url 'login' %}" class="form-inline" method="post">
+        <br>
+        <div class="input-group center">
+            <label class="control-label col-sm-3" for="username">Username:</label>
+            <input class="form-control text-center" id="username" name="username" placeholder="Enter username" size="50"
+                   type="text">
+        </div>
+        <div class="input-group center">
+            <label class="control-label col-sm-3" for="password">Password:</label>
+            <input class="form-control text-center" id="password" name="password" placeholder="Enter password" size="50"
+                   type="password">
+        </div>
 
-    <form method="post" action="{% url 'login' %}">
-        <table>
-            {{form}}
-        </table>
+        {% if error %}
+        <div class="input-group center">
+            <p class="error" style="padding: 2vh 25vw; color: #cd5c5c">
+                {{ error }}
+            </p>
+        </div>
+        {% endif %}
+
         {% csrf_token %}
-        <button type="submit" id="id_login_button">Login</button>
-        <a href="{% url 'register' %}" id="id_register_link">Register</a>
-
-
-    {% for error in form.non_field_errors %}
-        <p class="errorlist">
-            {{ error }}
-        </p>
-    {% endfor %}
-
+        <div class="input-group-btn" style="padding: 6vh 25vw">
+            <!--            <div class="col-sm-offset-6 col-sm-12">-->
+            <button class="btn btn-default" type="submit">Login</button>
+            <!--            </div>-->
+        </div>
+    </form>
+</div>
 {% endblock %}
