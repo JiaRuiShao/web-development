@@ -91,7 +91,6 @@ def login_action(request):
     context = {'page_name': 'Login'}
 
     if request.method == 'GET':
-        context['form'] = LoginForm()
         return render(request, 'findspy/login.html', context)
 
     # get username and password
