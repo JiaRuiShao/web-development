@@ -1,24 +1,21 @@
 {% extends "./base.html" %}
 
+{% block title %}
+Who is the SPY? - Home
+{% endblock %}
+
 {% block container %}
-<div class="row">
-    <div class="col-sm-12" style="text-align:center">
-        <h1></h1>
-        <br><br>
-        <h2>Game Intro</h2>
-        <br>
-        <h5>Identities</h5>
-        <p>Some text..</p>
-        <h5>Rules</h5>
-        <p>Some text..</p>
-        <br>
+<div class="row" onload="userVisitCount()" style="padding: 10vh 20vw">
+    <div id="game-rules" class="col-sm-12" style="text-align: left">
+        <!-- rules will be appended here if the user is new or -->
+        <!-- if the user click display rule hyperlink in the navigation bar -->
     </div>
-    <div class="col-sm-12" style="text-align:center">
-        <h5>start from here</h5>
+    <div class="col-sm-12" style="text-align: center; padding-top: 7vh">
+        <h2>Start From Here</h2>
         <div class="btn-group-vertical">
-            <button class="btn btn-primary" type="button">Create Room</button>
-            <button class="btn btn-primary" type="button">Join Room</button>
-            <button class="btn btn-primary" type="button">Game Intro</button>
+            <button class="btn btn-secondary" type="button">Create Room</button>
+            <button class="btn btn-secondary" type="button">Join Room</button>
+            <button class="btn btn-secondary" type="button">Game Intro</button>
         </div>
         <br><br>
     </div>
