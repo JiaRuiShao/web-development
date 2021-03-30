@@ -5,8 +5,8 @@ Who is the SPY? - Home
 {% endblock %}
 
 {% block container %}
-<div class="row" onload="userVisitCount()" style="padding: 10vh 20vw">
-    <div class="col-sm-12" id="game-rules" style="text-align: left">
+<div class="container text-center" onload="userVisitCount()" style="padding: 10vh 20vw">
+    <div class="col-sm-12" id="game-rules">
         <!-- rules will be appended here if the user is new or -->
         <!-- if the user click display rule hyperlink in the navigation bar -->
     </div>
@@ -18,14 +18,15 @@ Who is the SPY? - Home
                 <button class="btn btn-secondary dropdown-toggle rounded-0" data-toggle="dropdown" type="button">Create Room
                 </button>
                 <div class="dropdown-menu">
-                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>
+<!--                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>-->
                     <a class="dropdown-item" href="#">Create a room for 3</a>
                     <a class="dropdown-item" href="#">Create a room for 5</a>
                 </div>
             </div>
-            <button class="btn btn-secondary" type="button">Join Room</button>
+            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#room-search">Join Room</button>
         </div>
         <br><br>
+        <input class="form-control collapse text-center" id="room-search" type="text" placeholder="Search the room number:">
     </div>
 </div>
 {% endblock %}

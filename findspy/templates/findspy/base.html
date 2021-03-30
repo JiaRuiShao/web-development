@@ -19,12 +19,7 @@
 </head>
 
 <body>
-<div class="jumbotron text-center"  style="margin-bottom:0">
-    <h1>Who is the Spy</h1>
-    <p>Play with your friends and hide your identity</p>
-</div>
-
-<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
     {% if user.first_name %}
     <a class="navbar-brand" href="#">Welcome, {{user.first_name}} {{user.last_name}}</a>
     {% else %}
@@ -53,6 +48,11 @@
     </div>
     {% endif %}
 </nav>
+
+<div class="jumbotron text-center" style="padding-top: 15vh">
+    <h1>Who is the Spy</h1>
+    <p>Play with your friends and hide your identity</p>
+</div>
 
 {% if message %}
 <div class="message">
