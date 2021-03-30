@@ -28,16 +28,16 @@ class LoginForm(forms.Form):
 
 class RegisterForm(forms.Form):
     username = forms.CharField(max_length=20)
-    password = forms.CharField(max_length=200,
+    password = forms.CharField(max_length=100,
                                label='Password',
                                widget=forms.PasswordInput())
-    confirm_password = forms.CharField(max_length=200,
-                                       label='Confirm password',
+    confirm_password = forms.CharField(max_length=100,
+                                       label='Confirm Password',
                                        widget=forms.PasswordInput())
     email = forms.CharField(max_length=50,
                             widget=forms.EmailInput())
-    first_name = forms.CharField(max_length=20)
-    last_name = forms.CharField(max_length=20)
+    first_name = forms.CharField(max_length=20, label='First Name')
+    last_name = forms.CharField(max_length=20, label='Last Name')
 
     # Customizes form validation for properties that apply to more
     # than one field.  Overrides the forms.Form.clean function.
@@ -72,6 +72,7 @@ class ProfileForm(forms.ModelForm):
             'following',
             'content_type',
         )
+        
 
     def clean_picture(self):
         picture = self.cleaned_data['picture']
