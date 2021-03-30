@@ -7,37 +7,46 @@
 {% endblock %}
 
 {% block container %}
-<div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
+<div class="container-fluid text-center"
+     style="padding: 10vh 35vw; font-size: 20px; margin-left: auto; margin-right: auto;">
     <div>
-    <div class="user-img" >
-        {% if profile.picture %}
+        <div class="user-img">
+            {% if profile.picture %}
             <img src="{% url 'photo' profile.id %}" width="200px">
-        {% else %}
+            {% else %}
             <img src="/static/images/default.png" width="200px">
-        {% endif %}
-    </div>
-
-    <form enctype="multipart/form-data" method="post" action="{% url 'profile' user.id %}">
-        <br>
-        <div class="user-bio">
-            <textarea type="text" id="id_bio_input_text" name="bio" maxlength="400" cols="50" rowa="5">{{ profile.bio }}</textarea>
-            <label style="display:flex">Profile Picture:</label>
-            <input id="id_profile_picture" type="file" name="picture" style="display:flex"></input>
+            {% endif %}
         </div>
-        <br/>
-        {% csrf_token %}
-        <input class="btn btn-default btn-lg" type="submit" value="Submit" style="background-color: #E9ECEF; margin: 2vh 25vw;">
-    </form>
+
+        <form action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
+            <br>
+            <div class="user-bio">
+                <textarea cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3"
+                          style="border: none; resize: none"
+                          type="text">{{ profile.bio }}</textarea>
+                <div class="btn btn-default btn-lg" id="change-profile" onclick="changeProfile()"
+                     style="margin-left: auto; margin-right: auto;">Change Profile Info
+                </div>
+                <div class="change-profile" style="display: none">
+                    <label style="display:flex">Profile Picture:</label>
+                    <input id="id_profile_picture" name="picture" style="display:flex" type="file"></input>
+                    {% csrf_token %}
+                    <input class="btn btn-default btn-lg" style="background-color: #E9ECEF; margin: 2vh 25vw;"
+                           type="submit" value="Submit">
+                </div>
+            </div>
+        </form>
     </div>
     <div class="user-following">
+        {% if user.profile_user.following.all.count > 1 %}
         <br/><br/>You are following:
         <ul>
             {% for follower in user.profile_user.following.all %}
-                <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
-                    {{ follower.first_name }} {{ follower.last_name }}</a></li>
+            <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
+                {{ follower.first_name }} {{ follower.last_name }}</a></li>
             {% endfor %}
         </ul>
-
+        {% endif%}
     </div>
 </div>
 {% endblock %}
