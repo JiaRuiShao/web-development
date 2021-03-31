@@ -9,33 +9,32 @@ Who is the SPY? - Login
 {% endblock %}
 
 {% block container %}
-<div class="container-fluid text-center mx-auto" style="padding: 10vh 35vw; font-size: 20px;>
-    <form action="{% url 'login' %}" class="form-inline" method="post">
+<div class="container text-center mx-auto" style="padding: 5vh 20vw; font-size: 20px">
+    <form action="{% url 'login' %}" method="post">
         <br>
         <div class="input-group">
             <label class="control-label col-sm-3" for="username">Username:</label>
             <input class="form-control text-center" id="username" name="username" placeholder="Enter username" size="40vw"
-                   type="text" required style="font-size: 20px">
-        </div><br><br>
+                   type="text" required>
+        </div><br>
         <div class="input-group">
             <label class="control-label col-sm-3" for="password">Password:</label>
             <input class="form-control text-center" id="password" name="password" placeholder="Enter password" size="40vw"
-                   type="password" required style="font-size: 20px">
-        </div>
+                   type="password" required>
+        </div><br>
 
         {% if error %}
-        <div class="input-group center">
-            <p class="error" style="color: #cd5c5c; font-size: 15px; margin: 1vh;">
-                <br>{{ error }}
+        <div class="input-group">
+            <p class="text-danger">
+                {{ error }}
             </p>
         </div>
         {% endif %}
 
+
         {% csrf_token %}
-        <div class="input-group-btn">
-            <!--            <div class="col-sm-offset-6 col-sm-12">-->
-            <button class="btn btn-default btn-lg" type="submit" style="background-color: #E9ECEF; margin: 2vh 25vw;">Login</button>
-            <!--            </div>-->
+        <br><div class="input-group-btn">
+            <button class="btn btn-light btn-lg" type="submit">Login</button>
         </div>
     </form>
 </div>

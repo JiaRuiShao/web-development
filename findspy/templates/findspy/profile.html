@@ -11,8 +11,8 @@ Who is the SPY? - Profile
 {% endblock %}
 
 {% block container %}
-<div class="container-fluid text-center"
-     style="padding: 10vh 35vw; font-size: 20px; margin-left: auto; margin-right: auto;">
+<div class="container-fluid text-center mx-auto"
+     style="padding: 10vh 35vw; font-size: 20px;">
     <div>
         <div class="user-img">
             {% if profile.picture %}
@@ -25,18 +25,16 @@ Who is the SPY? - Profile
         <form action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
             <br>
             <div class="user-bio">
-                <textarea cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3"
+                <textarea class="text-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3"
                           style="border: none; resize: none"
                           type="text">{{ profile.bio }}</textarea>
-                <div class="btn btn-default btn-lg" id="change-profile" onclick="changeProfile()"
-                     style="margin-left: auto; margin-right: auto;">Change Profile Info
-                </div>
-                <div class="change-profile" style="display: none">
-                    <label style="display:flex">Profile Picture:</label>
-                    <input id="id_profile_picture" name="picture" style="display:flex" type="file"></input>
+                <div class="btn btn-light btn-lg mx-auto" id="change-profile" onclick="changeProfile()">Change Profile Info
+                </div><br><br>
+                <div class="change-profile mx-auto text-center" style="display: none">
+                    <label>Profile Picture:</label>
+                    <input id="id_profile_picture" name="picture" type="file" style="padding-left: 15%"></input><br><br>
                     {% csrf_token %}
-                    <input class="btn btn-default btn-lg" style="background-color: #E9ECEF; margin: 2vh 25vw;"
-                           type="submit" value="Submit">
+                    <input class="btn btn-light btn-lg" type="submit" value="Submit">
                 </div>
             </div>
         </form>
