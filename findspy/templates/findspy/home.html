@@ -4,6 +4,12 @@
 Who is the SPY? - Home
 {% endblock %}
 
+{% block rule-display %}
+<li class="nav-item">
+    <a class="nav-link" onclick="displayRule()">Display Rule</a>
+</li>
+{% endblock %}
+
 {% block container %}
 <div class="container text-center" onload="userVisitCount()" style="padding: 10vh 20vw">
     <div class="col-sm-12" id="game-rules">
@@ -15,18 +21,22 @@ Who is the SPY? - Home
         <div class="btn-group-vertical">
             <button class="btn btn-secondary" onclick="displayRule()" type="button">Game Intro</button>
             <div class="dropdown dropright">
-                <button class="btn btn-secondary dropdown-toggle rounded-0" data-toggle="dropdown" type="button">Create Room
+                <button class="btn btn-secondary dropdown-toggle rounded-0" data-toggle="dropdown" type="button">Create
+                    Room
                 </button>
                 <div class="dropdown-menu">
-<!--                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>-->
+                    <!--                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>-->
                     <a class="dropdown-item" href="#">Create a room for 3</a>
                     <a class="dropdown-item" href="#">Create a room for 5</a>
                 </div>
             </div>
-            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#room-search">Join Room</button>
+            <button class="btn btn-secondary" data-target="#room-search" data-toggle="collapse" type="button">Join
+                Room
+            </button>
         </div>
         <br><br>
-        <input class="form-control collapse text-center" id="room-search" type="text" placeholder="Search the room number:">
+        <input class="form-control collapse text-center" id="room-search" placeholder="Search the room number:"
+               type="text">
     </div>
 </div>
 {% endblock %}
