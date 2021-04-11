@@ -1,5 +1,9 @@
 {% extends "./base.html" %}
 
+{% block title %}
+Who is the SPY? - Profile
+{% endblock %}
+
 {% block page-name %}
 <span id="id_page_name">
     {{ page_name }} Page for {{ user.first_name }} {{ user.last_name }}
@@ -7,6 +11,7 @@
 {% endblock %}
 
 {% block container %}
+<<<<<<< HEAD
 <div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
     <div>
     <div class="user-img" >
@@ -28,16 +33,46 @@
         {% csrf_token %}
         <input class="btn btn-default btn-lg" type="submit" value="Submit" style="background-color: #E9ECEF; margin: 2vh 25vw;">
     </form>
+=======
+<div class="container-fluid text-center mx-auto"
+     style="padding: 10vh 35vw; font-size: 20px;">
+    <div>
+        <div class="user-img">
+            {% if profile.picture %}
+            <img src="{% url 'photo' profile.id %}" width="200px">
+            {% else %}
+            <img src="/static/images/default.png" width="200px">
+            {% endif %}
+        </div>
+
+        <form action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
+            <br>
+            <div class="user-bio">
+                <textarea class="text-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3"
+                          style="border: none; resize: none"
+                          type="text">{{ profile.bio }}</textarea>
+                <div class="btn btn-light btn-lg mx-auto" id="change-profile" onclick="changeProfile()">Change Profile Info
+                </div><br><br>
+                <div class="change-profile mx-auto text-center" style="display: none">
+                    <label>Profile Picture:</label>
+                    <input id="id_profile_picture" name="picture" type="file" style="padding-left: 15%"></input><br><br>
+                    {% csrf_token %}
+                    <input class="btn btn-light btn-lg" type="submit" value="Submit">
+                </div>
+            </div>
+        </form>
+>>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
     </div>
     <div class="user-following">
+        {% if user.profile_user.following.all.count > 1 %}
         <br/><br/>You are following:
         <ul>
             {% for follower in user.profile_user.following.all %}
-                <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
-                    {{ follower.first_name }} {{ follower.last_name }}</a></li>
+            <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
+                {{ follower.first_name }} {{ follower.last_name }}</a></li>
             {% endfor %}
         </ul>
-
+        {% endif%}
     </div>
 </div>
 {% endblock %}

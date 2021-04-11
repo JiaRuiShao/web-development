@@ -1,10 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "./base.html" %}
 
-</body>
-</html>
+{% block title %}
+Who is the SPY? - Profile
+{% endblock %}
+
+{% block page-name %}
+<span id="id_page_name">
+    {{ page_name }} Page for {{ user.first_name }} {{ user.last_name }}
+</span>
+{% endblock %}
+
+{% block container %}
+<div class="container-fluid text-center"
+     style="padding: 10vh 35vw; font-size: 20px; margin-left: auto; margin-right: auto;">
+    <div>
+        <div class="user-img">
+            {% if profile.picture %}
+            <img src="{% url 'photo' profile.id %}" width="200px">
+            {% else %}
+            <img src="/static/images/default.png" width="200px">
+            {% endif %}
+        </div>
+        <div class="user-bio">
+                <textarea class="text-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" readonly
+                          rows="3"
+                          style="border: none; resize: none" type="text">{{ profile.bio }}
+                </textarea>
+        </div>
+    </div>
+    <div class="user-following">
+        <form action="{% url 'profile' view_user.id %}" method="post">
+            {% csrf_token %}
+            {% if following %}
+            <button class="btn btn-default btn-lg" name="follow" style="background-color: #E9ECEF; margin: 2vh 25vw;" type="submit"
+                    value="unfollow">Unfollow
+            </button>
+            {% else %}
+            <button class="btn btn-default btn-lg" name="follow" style="background-color: #E9ECEF; margin: 2vh 25vw;" type="submit"
+                    value="follow">Follow
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

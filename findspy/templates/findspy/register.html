@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block container %}
+<<<<<<< HEAD
 <div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
     <form method="post" action="{% url 'register' %}">
         <table>
@@ -16,9 +17,60 @@
                         {% for error in field.errors %}{{error}} {% endfor %}
                     </td>
                 </tr>
+=======
+<div class="container text-center mx-auto" style="padding: 5vh 20vw; font-size: 20px">
+    <form action="{% url 'register' %}" method="post">
+        <!--<table>
+            {% for field in form.visible_fields %}
+            <tr>
+                <td>{{field.label_tag}}</td>
+                <td>{{field}}</td>
+                <td class="text-danger">
+                    {% for error in field.errors %} {{error}} {% endfor %}
+                </td>
+            </tr>
+>>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
             {% endfor %}
-        </table>
+        </table>-->
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="username">Username:</label>
+            <input class="form-control text-center" id="username" name="username" maxlength="20" placeholder="Enter username" size="40vw"
+                   type="text" required>
+        </div><br>
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="password">Password:</label>
+            <input class="form-control text-center" id="password" name="password" placeholder="Enter password" size="40vw"
+                   type="password" required>
+        </div><br>
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="confirm_password">Confirm Password:</label>
+            <input class="form-control text-center" id="confirm_password" name="confirm_password" placeholder="Enter password again" size="40vw"
+                   type="password" required>
+        </div>
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="email">Email:</label>
+            <input class="form-control text-center" id="email" name="email" placeholder="Enter email address" size="40vw"
+                   type="email">
+        </div><br>
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="first_name">First Name:</label>
+            <input class="form-control text-center" id="first_name" name="first_name" placeholder="Enter firstname" size="40vw"
+                   type="text">
+        </div><br>
+
+        <div class="input-group">
+            <label class="control-label col-sm-3" for="last_name">Last Name:</label>
+            <input class="form-control text-center" id="last_name" name="last_name" placeholder="Enter lastname" size="40vw"
+                   type="text">
+        </div><br>
+
         {% csrf_token %}
+<<<<<<< HEAD
         <button type="submit" class="btn btn-default"  style="background-color: #E9ECEF; margin: 2vh 20vw;">Register</button>
     </form>
 
@@ -28,6 +80,16 @@
             {{ error }}
         </p>
     </div>
+=======
+        <br><button class="btn btn-light btn-lg" type="submit">Register</button>
+    </form><br>
+
+
+    {% if error %}
+    <p class="text-danger">
+        {{ error }}
+    </p>
+>>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
     {% endif %}
 
 </div>>
