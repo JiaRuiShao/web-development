@@ -22,6 +22,7 @@ function userVisitCount() {
 
 function displayRule() {
     if (document.getElementById('game-intro') == null) {
+        $("#game_rule_button").html('Close');
         $("#game-rules").html(
             '<h2 id="game-intro">Game Intro</h2><br>' +
             '<h5>You will be randomly assigned with a word</h5><br>' +
@@ -39,6 +40,8 @@ function displayRule() {
         );
     } else {
         $("#game-rules").html('');
+        $("#game_rule_button").html('Game Rules');
+
     }
 }
 

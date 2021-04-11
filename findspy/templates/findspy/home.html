@@ -26,8 +26,15 @@ Who is the SPY? - Home
                 </button>
                 <div class="dropdown-menu">
                     <!--                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>-->
-                    <a class="dropdown-item" href="#">Create a room for 3</a>
-                    <a class="dropdown-item" href="#">Create a room for 5</a>
+                    <form method="post" action="{% url 'create_room_3' %}">
+                    <input type="submit" value = "Create a room for 3" class="dropdown-item"></input>
+                    {% csrf_token %}
+                    </form>
+
+                    <form method="post" action="{% url 'create_room_5' %}">
+                    <input type="submit" value = "Create a room for 5" class="dropdown-item"></input>
+                    {% csrf_token %}
+                    </form>
                 </div>
             </div>
             <button class="btn btn-secondary" data-target="#room-search" data-toggle="collapse" type="button">Join
@@ -35,8 +42,14 @@ Who is the SPY? - Home
             </button>
         </div>
         <br><br>
-        <input class="form-control collapse text-center" id="room-search" placeholder="Search the room number:"
-               type="text">
+        <div id = "room-search" class="form-control collapse text-center">
+            <form method="post"  class="dropdown-item" action="{% url 'join_room' %}">
+                <label>Search the room number:</label><br>
+                <input type="number" name = "room_search_id" id = "room_search_id"></input>
+                <input type="submit"></input>
+            {% csrf_token %}
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

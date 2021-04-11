@@ -9,31 +9,12 @@ Who is the SPY? - Login
 {% endblock %}
 
 {% block container %}
-<<<<<<< HEAD
-<div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
-    <form action="{% url 'login' %}" class="form-inline" method="post">
-=======
 <div class="container text-center mx-auto" style="padding: 5vh 20vw; font-size: 20px">
     <form action="{% url 'login' %}" method="post">
->>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
         <br>
         <div class="input-group">
             <label class="control-label col-sm-3" for="username">Username:</label>
             <input class="form-control text-center" id="username" name="username" placeholder="Enter username" size="40vw"
-<<<<<<< HEAD
-                   type="text" required style="font-size: 20px">
-        </div><br><br>
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="password">Password:</label>
-            <input class="form-control text-center" id="password" name="password" placeholder="Enter password" size="40vw"
-                   type="password" required style="font-size: 20px">
-        </div>
-
-        {% if error %}
-        <div class="input-group center">
-            <p class="error" style="color: #cd5c5c; font-size: 15px; margin: 1vh;">
-                <br>{{ error }}
-=======
                    type="text" required>
         </div><br>
         <div class="input-group">
@@ -46,22 +27,14 @@ Who is the SPY? - Login
         <div class="input-group">
             <p class="text-danger">
                 {{ error }}
->>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
             </p>
         </div>
         {% endif %}
 
 
         {% csrf_token %}
-<<<<<<< HEAD
-        <div class="input-group-btn">
-            <!--            <div class="col-sm-offset-6 col-sm-12">-->
-            <button class="btn btn-default btn-lg" type="submit" style="background-color: #E9ECEF; margin: 2vh 25vw;">Login</button>
-            <!--            </div>-->
-=======
         <br><div class="input-group-btn">
             <button class="btn btn-light btn-lg" type="submit">Login</button>
->>>>>>> 146f4fbf68a0233426212801f58d0460910f5944
         </div>
     </form>
 </div>

@@ -12,7 +12,8 @@ class Profile(models.Model):
         return self.bio
 
 class Room(models.Model):
-    capacity = models.IntegerField(default=None),
+    capacity = models.IntegerField(default=3)
+    current_capacity = models.IntegerField(default=0)
     player = models.ManyToManyField(User, default=None)
     ready = models.BooleanField(default=False)
 
@@ -22,3 +23,12 @@ class Room(models.Model):
         if capacity != 3 or capacity != 5:
             raise ValueError("Room number has to be either three or five.")
         return cleaned_data
+
+class Message(models.Model):
+    sender  = models.ForeignKey(User, on_delete=models.PROTECT, related_name="senders")
+    timestamp = models.DateTimeField()
+    room = models.ForeignKey("Room", on_delete=models.PROTECT, related_name="roomid")
+    message = models.CharField(max_length=1000)
+
+    def __str__(self):
+        return self.message

@@ -19,13 +19,86 @@ def self_profile_action(request):
 
 
 @login_required
-def create_room():
-    return None
+def create_room_3(request):
+    context = {}
+    if request.method == 'GET':
+        context['error'] = 'You must enter a room to create.'
+        return render(request, 'findspy/home.html', context)
+
+    room = Room()
+    room.capacity = 3
+    room.current_capacity = 1
+    room.ready = False
+    room.save()
+    room.player.add(request.user)
+    room.save()
+
+    context = { 'room': room}
+    return render(request, 'findspy/room_for_3.html', context)
+
+@login_required
+def create_room_5(request):
+    context = {}
+    if request.method == 'GET':
+        context['error'] = 'You must enter a room to create.'
+        return render(request, 'findspy/home.html', context)
+
+    room = Room()
+    room.capacity = 5
+    room.current_capacity = 1
+    room.ready = False
+    room.save()
+    room.player.add(request.user)
+    room.save()
+
+    context = { 'room': room}
+    return render(request, 'findspy/room_for_5.html', context)
 
 
 @login_required
-def join_room():
-    return None
+def join_room(request):
+    context = {}
+    if request.method == 'GET':
+        context['error'] = 'You need a POST request.'
+        return render(request, 'findspy/home.html', context)
+
+    roomid = request.POST.get('room_search_id')
+    room = get_object_or_404(Room, id=roomid)
+
+    if(room.capacity == 3):
+        if (room.capacity > room.current_capacity):
+            if (request.user not in room.player.all()):
+                room.current_capacity += 1
+                room.player.add(request.user)
+                room.save()
+                context['room'] = room
+            else: 
+                context['room'] = room
+                context['error'] = 'You have already in the room.'
+            return render(request, 'findspy/room_for_3.html', context)
+        else:
+            context['error'] = 'The room is full.'
+            return render(request, 'findspy/home.html', context)
+
+    elif(room.capacity == 5):
+        if (room.capacity > room.current_capacity):
+            if (request.user not in room.player.all()):
+                room.current_capacity += 1
+                room.player.add(request.user)
+                room.save()
+            else: 
+                context['room'] = room
+                context['error'] = 'You have already in the room.'
+            return render(request, 'findspy/room_for_5.html', context)
+        else:
+            context['error'] = 'The room is full.'
+            return render(request, 'findspy/home.html', context)
+
+    else: 
+        context['error'] = 'You must enter a room capacity.'
+
+
+    return render(request, 'findspy/home.html', context)
 
 
 @login_required

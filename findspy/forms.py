@@ -5,6 +5,18 @@ from findspy.models import *
 
 MAX_UPLOAD_SIZE = 2500000
 
+class CreateRoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        exclude = ()
+        labels = {
+            'player': '',
+            'ready': '',
+            'current_capacity': '',
+            'capacity': ''
+
+        }
+
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=20)
     password = forms.CharField(max_length=200, widget=forms.PasswordInput())
