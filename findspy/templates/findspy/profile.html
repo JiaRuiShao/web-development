@@ -7,28 +7,28 @@
 {% endblock %}
 
 {% block container %}
-<div class="user-img">
+<div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
+    <div>
+    <div class="user-img" >
         {% if profile.picture %}
-            <img src="{% url 'photo' profile.id %}" width="20vw">
+            <img src="{% url 'photo' profile.id %}" width="200px">
         {% else %}
-            {% load static %}
-            <img src="{% static 'cover.jpg' %}" width="20vw">
+            <img src="/static/images/default.png" width="200px">
         {% endif %}
     </div>
 
     <form enctype="multipart/form-data" method="post" action="{% url 'profile' user.id %}">
+        <br>
         <div class="user-bio">
-            <label for="id_bio_input_text"></label>
-            <textarea type="text" id="id_bio_input_text" name="bio" maxlength="400">{{ profile.bio }}</textarea>
-            <br/><br/>
-            Profile Picture:
-            <input id="id_profile_picture" type="file" name="picture">
+            <textarea type="text" id="id_bio_input_text" name="bio" maxlength="400" cols="50" rowa="5">{{ profile.bio }}</textarea>
+            <label style="display:flex">Profile Picture:</label>
+            <input id="id_profile_picture" type="file" name="picture" style="display:flex"></input>
         </div>
         <br/>
         {% csrf_token %}
-        <input type="submit" id="id_update_profile_button" value="Submit">
+        <input class="btn btn-default btn-lg" type="submit" value="Submit" style="background-color: #E9ECEF; margin: 2vh 25vw;">
     </form>
-
+    </div>
     <div class="user-following">
         <br/><br/>You are following:
         <ul>
@@ -39,4 +39,5 @@
         </ul>
 
     </div>
+</div>
 {% endblock %}

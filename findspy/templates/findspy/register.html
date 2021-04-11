@@ -5,26 +5,26 @@
 {% endblock %}
 
 {% block container %}
-<div class="container-fluid text-center" style="padding: 50px 25vw;">
-    <form action="{% url 'register' %}" class="form-inline center" method="post" style="padding: 0px 10vw">
+<div class="container-fluid text-center" style="padding: 10vh 35vw; font-size: 20px; margin-left: auto;margin-right: auto;">
+    <form method="post" action="{% url 'register' %}">
         <table>
             {% for field in form.visible_fields %}
-            <tr>
-                <td>{{field.label_tag}}</td>
-                <td>{{field}}</td>
-                <td class="error" style="padding: 2vh 25vw; color: #cd5c5c">
-                    {% for error in field.errors %} {{error}} {% endfor %}
-                </td>
-            </tr>
+                <tr>
+                    <td>{{field.label_tag}}</td>
+                    <td>{{field}}</td>
+                    <td class="error" style="color: #cd5c5c; font-size: 15px; margin: 1vh;">
+                        {% for error in field.errors %}{{error}} {% endfor %}
+                    </td>
+                </tr>
             {% endfor %}
         </table>
         {% csrf_token %}
-        <button class="btn btn-default" type="submit">Register</button>
+        <button type="submit" class="btn btn-default"  style="background-color: #E9ECEF; margin: 2vh 20vw;">Register</button>
     </form>
 
     {% if error %}
     <div class="input-group center">
-        <p class="error" style="padding: 2vh 25vw; color: #cd5c5c">
+        <p class="error" style="color: #cd5c5c; font-size: 15px; margin: 1vh;">
             {{ error }}
         </p>
     </div>
