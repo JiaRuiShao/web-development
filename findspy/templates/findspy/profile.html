@@ -22,11 +22,10 @@ Who is the SPY? - Profile
             {% endif %}
         </div>
 
-        <form action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
+        <form class="form-horizontal" action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
             <br>
             <div class="user-bio">
-                <textarea class="text-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3"
-                          style="border: none; resize: none"
+                <textarea class="text-center form-group row justify-content-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3" style="border: none; resize: none"
                           type="text">{{ profile.bio }}</textarea>
                 <div class="btn btn-light btn-lg mx-auto" id="change-profile" onclick="changeProfile()">Change Profile Info
                 </div><br><br>

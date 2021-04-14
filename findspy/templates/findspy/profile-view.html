@@ -32,11 +32,11 @@ Who is the SPY? - Profile
         <form action="{% url 'profile' view_user.id %}" method="post">
             {% csrf_token %}
             {% if following %}
-            <button class="btn btn-default btn-lg" name="follow" style="background-color: #E9ECEF; margin: 2vh 25vw;" type="submit"
+            <button class="btn btn-light btn-lg" name="follow" type="submit"
                     value="unfollow">Unfollow
             </button>
             {% else %}
-            <button class="btn btn-default btn-lg" name="follow" style="background-color: #E9ECEF; margin: 2vh 25vw;" type="submit"
+            <button class="btn btn-light btn-lg" name="follow" type="submit"
                     value="follow">Follow
             </button>
             {% endif %}

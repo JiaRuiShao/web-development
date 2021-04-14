@@ -7,13 +7,13 @@ class Profile(models.Model):
     following = models.ManyToManyField(User, default=None, related_name='following')
     picture = models.FileField(blank=True)
     content_type = models.CharField(max_length=50)
+    current_room = models.IntegerField(default= 0)
 
     def __str__(self):
         return self.bio
 
 class Room(models.Model):
     capacity = models.IntegerField(default=3)
-    current_capacity = models.IntegerField(default=0)
     player = models.ManyToManyField(User, default=None)
     ready = models.BooleanField(default=False)
 

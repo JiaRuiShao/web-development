@@ -1,0 +1,48 @@
+{% extends "./base.html" %}
+
+{% block title %}
+Who is the SPY? - Home
+{% endblock %}
+
+{% block container %}
+<div class="container" onload="userVisitCount()">
+    <div class="get-quote shadow-lg p-4 mb-4 bg-white">
+        <div class="row">
+            {% if error %}
+            <p class="text-danger mx-auto w-auto">
+                {{ error }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="row">
+            <div class="col-sm-12 d-flex" style="margin-bottom: 2rem">
+                {% if room.capacity == 3 %}
+                    <h2 id="quote">ROOM FOR THREE</h2>
+                {% else %}
+                    <h2 id="quote">ROOM FOR FIVE</h2>
+                {% endif %}
+                <div class="col-sm-10" id="game-rules"></div>
+                <button class="btn btn-light btn-lg ml-ao" id="game_rule_button"
+                        onclick="displayRule();">Game Rules
+                </button>
+            </div><br><br>
+            <h5 class="col-sm-12 d-flex">Current Players: {{ room.player.count }}</h5>
+            {% if players.count != 0 %}
+                {% for player in players %}
+                    <h6 class="col-sm-12 d-flex"><a href="{% url 'profile' player.id %}" class="text-info">
+                    {{ player.first_name }} {{ player.last_name }}</a></h6>
+                {% endfor %}
+            {% endif %}
+            <br><br>
+            <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} Ready: {{room.ready}}</h5>
+        </div>
+    </div>
+
+    <!--  are we going to have a button to let each user confirm their status to start the game  -->
+    {% if room.ready == True %}
+    <script>getPlayer(room.id);</script>
+    {% endif %}
+
+</div>
+{% endblock %}
+

@@ -1,9 +1,12 @@
+import json
+
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, Http404
+from django.views.decorators.csrf import ensure_csrf_cookie
 from findspy.models import Profile, Room
 from findspy.forms import *
 
@@ -13,47 +16,39 @@ def home(request):
     context = {'page_name': 'Home'}
     return render(request, 'findspy/home.html', context)
 
-@login_required
-def self_profile_action(request):
-    return None
-
 
 @login_required
-def create_room_3(request):
+def create_room(request):
     context = {}
     if request.method == 'GET':
         context['error'] = 'You must enter a room to create.'
         return render(request, 'findspy/home.html', context)
 
-    room = Room()
-    room.capacity = 3
-    room.current_capacity = 1
-    room.ready = False
-    room.save()
-    room.player.add(request.user)
-    room.save()
+    newRoom_capacity = 0
+    try: 
+        if 'room_capacity' in request.POST:
+            if (int(request.POST.get('room_capacity')) == 3
+                or int(request.POST.get('room_capacity')) == 5):
+                newRoom_capacity = int(request.POST.get('room_capacity'))
+                    
+    except Exception:
+        context['error'] = ('invalid room capacity')
 
-    context = { 'room': room}
-    return render(request, 'findspy/room_for_3.html', context)
+    profile = Profile.objects.get(user=request.user)
 
-@login_required
-def create_room_5(request):
-    context = {}
-    if request.method == 'GET':
-        context['error'] = 'You must enter a room to create.'
+    if (profile.current_room == 0):
+        room = Room.objects.create(capacity=newRoom_capacity, ready=False)
+        room.player.add(request.user)
+        room.save()
+
+        profile.current_room = room.id
+        profile.save()
+
+        context = {'room': room, 'players': room.player.all()}
+        return render(request, 'findspy/room.html', context)
+    else: 
+        context['error'] = 'You cannot join multiple room at the same time.'
         return render(request, 'findspy/home.html', context)
-
-    room = Room()
-    room.capacity = 5
-    room.current_capacity = 1
-    room.ready = False
-    room.save()
-    room.player.add(request.user)
-    room.save()
-
-    context = { 'room': room}
-    return render(request, 'findspy/room_for_5.html', context)
-
 
 @login_required
 def join_room(request):
@@ -63,40 +58,46 @@ def join_room(request):
         return render(request, 'findspy/home.html', context)
 
     roomid = request.POST.get('room_search_id')
-    room = get_object_or_404(Room, id=roomid)
+    
+    try: 
+        room = Room.objects.get(id=roomid)
+    except Exception:
+        context['error'] = 'The room does not exist!'
+        return render(request, 'findspy/home.html', context)
 
-    if(room.capacity == 3):
-        if (room.capacity > room.current_capacity):
-            if (request.user not in room.player.all()):
-                room.current_capacity += 1
-                room.player.add(request.user)
-                room.save()
-                context['room'] = room
+
+    context['room'] = room
+    context['players'] = room.player.all()
+    
+    profile = Profile.objects.get(user=request.user)
+
+    if (request.user not in room.player.all()):
+        if(room.capacity == 3 or room.capacity == 5):
+            if (profile.current_room == 0):
+                if (room.capacity > room.player.count()):
+                    room.player.add(request.user)
+                    room.save()
+                    context['players'] = room.player.all()
+                    profile.current_room = room.id
+                    profile.save()
+                    if(room.capacity == room.player.count()):
+                        room.ready = True
+                        room.save()
+                    return render(request, 'findspy/room.html', context)
+                else:
+                    context['error'] = 'The room is full.'
+                    return render(request, 'findspy/home.html', context)
             else: 
-                context['room'] = room
-                context['error'] = 'You have already in the room.'
-            return render(request, 'findspy/room_for_3.html', context)
-        else:
-            context['error'] = 'The room is full.'
-            return render(request, 'findspy/home.html', context)
-
-    elif(room.capacity == 5):
-        if (room.capacity > room.current_capacity):
-            if (request.user not in room.player.all()):
-                room.current_capacity += 1
-                room.player.add(request.user)
-                room.save()
-            else: 
-                context['room'] = room
-                context['error'] = 'You have already in the room.'
-            return render(request, 'findspy/room_for_5.html', context)
-        else:
-            context['error'] = 'The room is full.'
-            return render(request, 'findspy/home.html', context)
-
-    else: 
-        context['error'] = 'You must enter a room capacity.'
-
+                context['error'] = 'You cannot join multiple room at the same time.'
+                return render(request, 'findspy/home.html', context)
+    
+        else: 
+                context['error'] = 'This room has a invalid room capacity'
+                return render(request, 'findspy/home.html', context)
+    else:
+        context['error'] = 'You have already been in the room.'
+        return render(request, 'findspy/room.html', context)
+    
 
     return render(request, 'findspy/home.html', context)
 
@@ -159,6 +160,31 @@ def get_photo(request, profile_id):
         raise Http404
     return HttpResponse(profile.picture, content_type=profile.content_type)
 
+
+@login_required
+@ensure_csrf_cookie
+def get_player(request, room_id):
+    if not request.user.id:
+        return _my_json_error_response("You must be logged in to do this operation", status=403)
+
+    response_data = []
+    room = get_object_or_404(Room, id=room_id)
+    for player in room.player.all():
+        players = {
+            'id': player.id,
+            'fname': player.first_name,
+            'lname': player.last_name,
+            'game_id': None,
+            'word': None,
+        }
+        response_data.append(players)
+    response_json = json.dumps(response_data)
+    return HttpResponse(response_json, content_type='application/json')
+
+def _my_json_error_response(message, status=200):
+    # You can create your JSON by constructing the string representation yourself (or just use json.dumps)
+    response_json = '{ "error": "' + message + '" }'
+    return HttpResponse(response_json, content_type='application/json', status=status)
 
 def login_action(request):
     context = {'page_name': 'Login'}

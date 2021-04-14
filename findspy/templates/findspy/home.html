@@ -11,7 +11,7 @@ Who is the SPY? - Home
 {% endblock %}
 
 {% block container %}
-<div class="container text-center" onload="userVisitCount()" style="padding: 10vh 20vw">
+<div class="container text-center shadow-lg p-4 mb-4 bg-white" onload="userVisitCount()" style="padding: 10vh 20vw">
     <div class="col-sm-12" id="game-rules">
         <!-- rules will be appended here if the user is new or -->
         <!-- if the user click display rule hyperlink in the navigation bar -->
@@ -26,13 +26,13 @@ Who is the SPY? - Home
                 </button>
                 <div class="dropdown-menu">
                     <!--                    <span class="dropdown-item-text">So far we only support to build a room with capacity 3 or 5</span>-->
-                    <form method="post" action="{% url 'create_room_3' %}">
-                    <input type="submit" value = "Create a room for 3" class="dropdown-item"></input>
+                    <form method="post" action="{% url 'create_room' %}">
+                    <button class="dropdown-item" name="room_capacity" value="3">Create a room for 3</button>
                     {% csrf_token %}
                     </form>
 
-                    <form method="post" action="{% url 'create_room_5' %}">
-                    <input type="submit" value = "Create a room for 5" class="dropdown-item"></input>
+                    <form method="post" action="{% url 'create_room' %}">
+                    <button class="dropdown-item" name="room_capacity" value="5">Create a room for 5</button>
                     {% csrf_token %}
                     </form>
                 </div>
@@ -42,14 +42,23 @@ Who is the SPY? - Home
             </button>
         </div>
         <br><br>
-        <div id = "room-search" class="form-control collapse text-center">
+        <div id = "room-search" class="form-control collapse text-center border border-0 .h-25">
             <form method="post"  class="dropdown-item" action="{% url 'join_room' %}">
-                <label>Search the room number:</label><br>
-                <input type="number" name = "room_search_id" id = "room_search_id"></input>
-                <input type="submit"></input>
+                <label class="control-label col-sm-6">Search the room number:</label><br>
+                <input class="form-control text-center" type="number" name = "room_search_id" id = "room_search_id"></input>
+                <button class="btn btn-light btn-sm" style="background-color: #333; color: #f1f1f1;" type="submit">Search</button>
             {% csrf_token %}
             </form>
+            <div class="row"></div>
+            <div class="row"></div>
         </div>
+        {% if error %}
+            <br><br><br><br>
+            <p class="text-danger mx-auto w-auto">
+                {{ error }}
+            </p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

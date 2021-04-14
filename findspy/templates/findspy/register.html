@@ -5,66 +5,31 @@
 {% endblock %}
 
 {% block container %}
-<div class="container text-center mx-auto" style="padding: 5vh 20vw; font-size: 20px">
-    <form action="{% url 'register' %}" method="post">
-        <!--<table>
+<div class="container" style="font-size: 20px">
+    <form class="form-horizontal" action="{% url 'register' %}" method="post">
+        <table class="table table-nonfluid mx-auto w-auto">
             {% for field in form.visible_fields %}
-            <tr>
-                <td>{{field.label_tag}}</td>
-                <td>{{field}}</td>
-                <td class="text-danger">
-                    {% for error in field.errors %} {{error}} {% endfor %}
-                </td>
-            </tr>
+                <tr class="form-group row justify-content-center">
+                    <td class="control-label col-sm-3">{{field.label_tag}}</td >
+                    <td>{{field}}</td>
+                    </div>
+                    <td class="error">
+                        {% for error in field.errors %}
+                        <p class="text-danger" >
+                            {{ error }}
+                        </p>
+                        {% endfor %}
+                    </td>
+                </tr>
             {% endfor %}
-        </table>-->
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="username">Username:</label>
-            <input class="form-control text-center" id="username" name="username" maxlength="20" placeholder="Enter username" size="40vw"
-                   type="text" required>
-        </div><br>
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="password">Password:</label>
-            <input class="form-control text-center" id="password" name="password" placeholder="Enter password" size="40vw"
-                   type="password" required>
-        </div><br>
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="confirm_password">Confirm Password:</label>
-            <input class="form-control text-center" id="confirm_password" name="confirm_password" placeholder="Enter password again" size="40vw"
-                   type="password" required>
-        </div>
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="email">Email:</label>
-            <input class="form-control text-center" id="email" name="email" placeholder="Enter email address" size="40vw"
-                   type="email">
-        </div><br>
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="first_name">First Name:</label>
-            <input class="form-control text-center" id="first_name" name="first_name" placeholder="Enter firstname" size="40vw"
-                   type="text">
-        </div><br>
-
-        <div class="input-group">
-            <label class="control-label col-sm-3" for="last_name">Last Name:</label>
-            <input class="form-control text-center" id="last_name" name="last_name" placeholder="Enter lastname" size="40vw"
-                   type="text">
-        </div><br>
-
+        </table>
         {% csrf_token %}
-        <br><button class="btn btn-light btn-lg" type="submit">Register</button>
+        <div class="form-group row justify-content-center">
+            <button class="btn btn-light btn-lg" style="background-color: #333; color: #f1f1f1;" type="submit">Register</button>
+        </div>  
     </form><br>
 
 
-    {% if error %}
-    <p class="text-danger">
-        {{ error }}
-    </p>
-    {% endif %}
 
 </div>>
 {% endblock %}

@@ -45,3 +45,67 @@ function displayRule() {
     }
 }
 
+function getPlayer(room_id) {
+    $.ajax({
+        url: "/socialnetwork/get-player room_id",
+        dataType: "json",
+        success: validateUser,
+        error: updateError,
+    });
+}
+
+function validateUser(response) {
+    if (Array.isArray(response)) {
+        assignIDWords(response)
+    } else if (response.hasOwnProperty('error')) {
+        displayError(response.error)
+    } else {
+        displayError(response)
+    }
+}
+
+function assignIDWords(response) {
+    console.log(response.length)
+    let ids = [Array(response.length).keys()], idx;
+    // _.range(10);
+    // or create a set of integers, only allowed to add index when
+    let words = ['tiger', 'tiger', 'lion']
+    $(response).each(function () {
+        while (true) {
+            idx = Math.floor(Math.random() * ids.length);
+            if (ids[idx] != undefined) {
+                break;
+            }
+        }
+        this.game_id = ids[idx];
+        this.word = words[idx]
+        delete ids[idx];
+    })
+}
+
+function updateError(xhr, status, error) {
+    displayError('Status=' + xhr.status + ' (' + error + ')')
+}
+
+function displayError(message) {
+    $("#error").html(message);
+}
+
+function sanitize(s) {
+    // Be sure to replace ampersand first
+    return s.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+}
+
+function getCSRFToken() {
+    let cookies = document.cookie.split(";")
+    for (let i = 0; i < cookies.length; i++) {
+        let c = cookies[i].trim()
+        if (c.startsWith("csrftoken=")) {
+            return c.substring("csrftoken=".length, c.length)
+        }
+    }
+    return "unknown";
+}
