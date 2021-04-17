@@ -45,16 +45,51 @@ function displayRule() {
     }
 }
 
-function getPlayer(room_id) {
+function exitRoom() {
+    confirm("Are you sure that you want to exit the room?")
+}
+
+function displayPlayer(room_id) {
     $.ajax({
-        url: "/socialnetwork/get-player room_id",
+        url: "/findspy/get-player/" + room_id,
         dataType: "json",
-        success: validateUser,
+        success: validatePlayer,
         error: updateError,
     });
 }
 
-function validateUser(response) {
+function validatePlayer(response) {
+    if (Array.isArray(response)) {
+        displayName(response)
+    } else if (response.hasOwnProperty('error')) {
+        displayError(response.error)
+    } else {
+        displayError(response)
+    }
+}
+
+function displayName(response) {
+    $(response).each(function () {
+        if (document.getElementById(this.id) == null) {
+            $("#display_player").append(
+                '<h6 className="col-sm-12 d-flex"><a className="text-info" ' +
+                'href="/findspy/profile/' + this.id + '" id="' + this.id + '">' +
+                this.fname + ' ' + this.lname + '</a></h6><div>'
+            )
+        }
+    })
+}
+
+function setup(room_id) {
+    $.ajax({
+        url: "/findspy/get-player/" + room_id,
+        dataType: "json",
+        success: validate,
+        error: updateError,
+    });
+}
+
+function validate(response) {
     if (Array.isArray(response)) {
         assignIDWords(response)
     } else if (response.hasOwnProperty('error')) {
@@ -78,7 +113,7 @@ function assignIDWords(response) {
             }
         }
         this.game_id = ids[idx];
-        this.word = words[idx]
+        this.word = words[idx];
         delete ids[idx];
     })
 }

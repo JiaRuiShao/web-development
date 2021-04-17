@@ -20,8 +20,9 @@ Who is the SPY? - Home
         <h2>Start From Here</h2><br>
         <div class="btn-group-vertical">
             <button class="btn btn-secondary" onclick="displayRule()" type="button">Game Intro</button>
-            <div class="dropdown dropright">
-                <button class="btn btn-secondary dropdown-toggle rounded-0" data-toggle="dropdown" type="button">Create
+            {% if player.room == null %}
+           <div class="dropdown dropright">
+                <button class="btn btn-secondary dropdown-toggle rounded-0 " data-toggle="dropdown" type="button">Create
                     Room
                 </button>
                 <div class="dropdown-menu">
@@ -37,13 +38,16 @@ Who is the SPY? - Home
                     </form>
                 </div>
             </div>
-            <button class="btn btn-secondary" data-target="#room-search" data-toggle="collapse" type="button">Join
-                Room
+            <button class="btn btn-secondary" data-target="#room-search" data-toggle="collapse" type="button">Join Room
             </button>
+            {% else %}
+            <button class="btn btn-secondary" onclick="location.href='{% url 'return_room' %}'">Return Room </button>
+            {% endif %}
         </div>
         <br><br>
         <div id = "room-search" class="form-control collapse text-center border border-0 .h-25">
             <form method="post"  class="dropdown-item" action="{% url 'join_room' %}">
+                
                 <label class="control-label col-sm-6">Search the room number:</label><br>
                 <input class="form-control text-center" type="number" name = "room_search_id" id = "room_search_id"></input>
                 <button class="btn btn-light btn-sm" style="background-color: #333; color: #f1f1f1;" type="submit">Search</button>

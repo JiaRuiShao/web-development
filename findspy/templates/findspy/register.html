@@ -6,29 +6,28 @@
 
 {% block container %}
 <div class="container" style="font-size: 20px">
-    <form class="form-horizontal" action="{% url 'register' %}" method="post">
+    <form action="{% url 'register' %}" class="form-horizontal" method="post">
         <table class="table table-nonfluid mx-auto w-auto">
             {% for field in form.visible_fields %}
-                <tr class="form-group row justify-content-center">
-                    <td class="control-label col-sm-3">{{field.label_tag}}</td >
-                    <td>{{field}}</td>
-                    </div>
-                    <td class="error">
-                        {% for error in field.errors %}
-                        <p class="text-danger" >
-                            {{ error }}
-                        </p>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% csrf_token %}
-        <div class="form-group row justify-content-center">
-            <button class="btn btn-light btn-lg" style="background-color: #333; color: #f1f1f1;" type="submit">Register</button>
-        </div>  
-    </form><br>
-
+            <tr class="form-group row justify-content-center">
+                <td class="control-label col-sm-3">{{field.label_tag}}</td>
+                <td>{{field}}</td>
+</div>
+<td class="error">
+    {% for error in field.errors %}
+    <p class="text-danger">
+        {{ error }}
+    </p>
+    {% endfor %}
+</td>
+</tr>
+{% endfor %}
+</table>
+{% csrf_token %}
+<div class="form-group row justify-content-center">
+    <button class="btn btn-light btn-lg" style="background-color: #333; color: #f1f1f1;" type="submit">Register</button>
+</div>
+</form><br>
 
 
 </div>>

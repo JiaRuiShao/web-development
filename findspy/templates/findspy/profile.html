@@ -12,7 +12,7 @@ Who is the SPY? - Profile
 
 {% block container %}
 <div class="container-fluid text-center mx-auto"
-     style="padding: 10vh 35vw; font-size: 20px;">
+     style="font-size: 20px;">
     <div>
         <div class="user-img">
             {% if profile.picture %}
@@ -22,19 +22,18 @@ Who is the SPY? - Profile
             {% endif %}
         </div>
 
-        <form class="form-horizontal" action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
-            <br>
+        <br>
+        <form class="form-horizontal form-row justify-content-center" action="{% url 'profile' user.id %}" enctype="multipart/form-data" method="post">
             <div class="user-bio">
-                <textarea class="text-center form-group row justify-content-center" cols="20" id="id_bio_input_text" maxlength="400" name="bio" rows="3" style="border: none; resize: none"
-                          type="text">{{ profile.bio }}</textarea>
-                <div class="btn btn-light btn-lg mx-auto" id="change-profile" onclick="changeProfile()">Change Profile Info
-                </div><br><br>
-                <div class="change-profile mx-auto text-center" style="display: none">
-                    <label>Profile Picture:</label>
-                    <input id="id_profile_picture" name="picture" type="file" style="padding-left: 15%"></input><br><br>
-                    {% csrf_token %}
-                    <input class="btn btn-light btn-lg" type="submit" value="Submit">
-                </div>
+                <span style="margin-left: 15vw;">
+                <label>Profile Picture:</label>
+                <input id="id_profile_picture" name="picture" type="file"></input>
+                </span>
+                {% csrf_token %}
+                <textarea class="text-center form-control z-depth-1" id="id_bio_input_text" name="bio" rows="3" style="resize: none" type="text">{{ profile.bio }}</textarea>
+                <br>
+                <input class="btn btn-light btn-lg" type="submit" value="Submit">
+
             </div>
         </form>
     </div>

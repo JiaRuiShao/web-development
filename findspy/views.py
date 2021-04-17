@@ -1,6 +1,7 @@
 import json
+import random
 
-from django.shortcuts import render, redirect,  get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -13,7 +14,9 @@ from findspy.forms import *
 
 @login_required
 def home(request):
-    context = {'page_name': 'Home'}
+    player = Player.objects.get(player=request.user)
+    context = {'page_name': 'Home', 'player': player}
+
     return render(request, 'findspy/home.html', context)
 
 
@@ -24,31 +27,150 @@ def create_room(request):
         context['error'] = 'You must enter a room to create.'
         return render(request, 'findspy/home.html', context)
 
-    newRoom_capacity = 0
-    try: 
-        if 'room_capacity' in request.POST:
+    new_room_capacity = 0
+    try:
+        if 'room_capacity' in request.POST and request.POST['room_capacity'].isnumeric():
             if (int(request.POST.get('room_capacity')) == 3
-                or int(request.POST.get('room_capacity')) == 5):
-                newRoom_capacity = int(request.POST.get('room_capacity'))
-                    
+                    or int(request.POST.get('room_capacity')) == 5):
+                new_room_capacity = int(request.POST.get('room_capacity'))
+
     except Exception:
-        context['error'] = ('invalid room capacity')
+        context['error'] = 'invalid room capacity'
 
-    profile = Profile.objects.get(user=request.user)
+    player = Player.objects.get(player=request.user)
 
-    if (profile.current_room == 0):
-        room = Room.objects.create(capacity=newRoom_capacity, ready=False)
-        room.player.add(request.user)
+    if player.room == None:
+        room = Room.objects.create(capacity=new_room_capacity, ready=False)
+        room.player.add(player)
         room.save()
-
-        profile.current_room = room.id
-        profile.save()
+        # player.room = room # add the room creator into the room
 
         context = {'room': room, 'players': room.player.all()}
         return render(request, 'findspy/room.html', context)
-    else: 
+    else:
         context['error'] = 'You cannot join multiple room at the same time.'
+        context['player'] = player
+
         return render(request, 'findspy/home.html', context)
+
+@login_required
+def exit_room(request):
+    context = {}
+    if request.method == 'GET':
+        context['error'] = 'You must a valid room to exit.'
+        return render(request, 'findspy/room.html', context)
+
+    if 'exit_room_id' not in request.POST:
+        context['error'] = 'The room id is not valid'
+        return render(request, 'findspy/room.html', context)
+
+    room_id = request.POST.get('exit_room_id')
+    player = Player.objects.get(player=request.user)
+
+    try:
+        room = Room.objects.get(id=room_id)
+    except Exception:
+        context['error'] = 'The room does not exist!'
+        return render(request, 'findspy/room.html', context)
+
+    room.ready = False
+    room.save()
+    player.room = None
+    player.game_id = 0
+    player.word = None
+    player.identity = None
+    player.save()
+
+    context['error'] = "You have just exit room " + room_id
+
+    return render(request, 'findspy/home.html', context)
+@login_required
+def return_room(request):
+    context = {}
+    if request.method == 'POST':
+        context['error'] = 'You need a GET request.'
+        return render(request, 'findspy/home.html', context)
+
+    player = Player.objects.get(player=request.user)
+    room = player.room
+
+    context['room'] = room
+    context['players'] = room.player.all()
+    
+    return render(request, 'findspy/room.html', context)
+
+@login_required
+def assign_player_id_words(room_id):
+    players = Player.objects.filter(room = room_id)
+    game_sets_for_3 = {
+        0: {
+            0: "lion",
+            1: "tiger",
+            2: "tiger"
+        },
+        1: {
+            0: "apple",
+            1: "apple",
+            2: "pineapple"
+        },
+        2: {
+            0: "laptop",
+            1: "desktop",
+            2: "laptop"
+        }
+    }
+
+    game_sets_for_5 = {
+        0: {
+            0: "lion",
+            1: "tiger",
+            2: "tiger",
+            3: "tiger",
+            4: ""
+        },
+        1: {
+            0: "apple",
+            1: "apple",
+            2: "pineapple",
+            3: "",
+            4: "apple"
+        },
+        2: {
+            0: "laptop",
+            1: "desktop",
+            2: "laptop",
+            3: "laptop",
+            4: ""
+        }
+    }
+
+    # add identity assignment
+    if players.count() == 3:
+        set = random.randrange(0, len(game_sets_for_3))
+        words = game_sets_for_3[set].copy()
+        i = 0
+        while len(words) > 0:
+            word = words.pop(random.randrange(0, len(words)), None)
+            if word is None:
+                continue
+            else:
+                players[i].game_id = i
+                players[i].word = word
+                i += 1
+
+    if players.count() == 5:
+        set = random.randrange(0, len(game_sets_for_5))
+        words = game_sets_for_5[set].copy()
+        i = 0
+        while len(words) > 0:
+            word = words.pop(random.randrange(0, len(words)), None)
+            if word is None:
+                continue
+            else:
+                players[i].game_id = i
+                players[i].word = word
+                i += 1
+
 
 @login_required
 def join_room(request):
@@ -57,49 +179,50 @@ def join_room(request):
         context['error'] = 'You need a POST request.'
         return render(request, 'findspy/home.html', context)
 
-    roomid = request.POST.get('room_search_id')
-    
-    try: 
-        room = Room.objects.get(id=roomid)
+    if 'room_search_id' not in request.POST or not request.POST['room_search_id'].isnumeric():
+        context['error'] = 'The room id is not valid'
+        return render(request, 'findspy/home.html', context)
+
+    room_id = request.POST.get('room_search_id')
+
+    try:
+        room = Room.objects.get(id=room_id)
     except Exception:
         context['error'] = 'The room does not exist!'
         return render(request, 'findspy/home.html', context)
 
-
     context['room'] = room
     context['players'] = room.player.all()
-    
-    profile = Profile.objects.get(user=request.user)
 
-    if (request.user not in room.player.all()):
-        if(room.capacity == 3 or room.capacity == 5):
-            if (profile.current_room == 0):
-                if (room.capacity > room.player.count()):
-                    room.player.add(request.user)
-                    room.save()
-                    context['players'] = room.player.all()
-                    profile.current_room = room.id
-                    profile.save()
-                    if(room.capacity == room.player.count()):
+    player = Player.objects.get(player=request.user)
+    if player not in room.player.all():
+        if room.capacity == 3 or room.capacity == 5:
+            if player.room == None:
+                if room.capacity > room.player.count():
+                    room.player.add(player)
+
+                    # player.room = room
+
+                    if room.capacity == room.player.count():
                         room.ready = True
                         room.save()
+                        assign_player_id_words(room.id)  # assign words and play id for each user in the room
+
+                    context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
                 else:
                     context['error'] = 'The room is full.'
                     return render(request, 'findspy/home.html', context)
-            else: 
+            else:
                 context['error'] = 'You cannot join multiple room at the same time.'
                 return render(request, 'findspy/home.html', context)
-    
-        else: 
-                context['error'] = 'This room has a invalid room capacity'
-                return render(request, 'findspy/home.html', context)
+
+        else:
+            context['error'] = 'This room has a invalid room capacity'
+            return render(request, 'findspy/home.html', context)
     else:
         context['error'] = 'You have already been in the room.'
         return render(request, 'findspy/room.html', context)
-    
-
-    return render(request, 'findspy/home.html', context)
 
 
 @login_required
@@ -113,17 +236,15 @@ def view_profile(request, user_id):
     if user_id == request.user.id:
         if request.method == 'POST':
             profile_form = ProfileForm(request.POST, request.FILES)
-            if not profile_form.is_valid():
-                context['message'] = 'The data input is not valid. Try again.'
-                return render(request, 'findspy/profile.html', context)
-            # pic = profile_form.cleaned_data['picture']
-            # print('Uploaded picture: {} (type={})'.format(pic, type(pic)))
+            if profile_form.is_valid():
+                
+                profile.picture = profile_form.cleaned_data['picture']
+                profile.content_type = profile_form.cleaned_data['picture'].content_type
+                profile.save()
+                context['profile'] = profile
 
-            profile.picture = profile_form.cleaned_data['picture']
             profile.bio = profile_form.cleaned_data['bio']
-            profile.content_type = profile_form.cleaned_data['picture'].content_type
             profile.save()
-            context['profile'] = profile
 
         return render(request, 'findspy/profile.html', context)
 
@@ -172,19 +293,21 @@ def get_player(request, room_id):
     for player in room.player.all():
         players = {
             'id': player.id,
-            'fname': player.first_name,
-            'lname': player.last_name,
-            'game_id': None,
-            'word': None,
+            'fname': player.player.first_name,
+            'lname': player.player.last_name,
+            'game_id': player.game_id,
+            'word': player.word,
         }
         response_data.append(players)
     response_json = json.dumps(response_data)
     return HttpResponse(response_json, content_type='application/json')
 
+
 def _my_json_error_response(message, status=200):
     # You can create your JSON by constructing the string representation yourself (or just use json.dumps)
     response_json = '{ "error": "' + message + '" }'
     return HttpResponse(response_json, content_type='application/json', status=status)
+
 
 def login_action(request):
     context = {'page_name': 'Login'}
@@ -193,7 +316,8 @@ def login_action(request):
         return render(request, 'findspy/login.html', context)
 
     # get username and password
-    if 'username' not in request.POST or 'password' not in request.POST or not request.POST['username'] or not request.POST['password']:
+    if 'username' not in request.POST or 'password' not in request.POST or not request.POST['username'] or not \
+            request.POST['password']:
         context['error'] = "Invalid username/password."
         return render(request, 'findspy/login.html', context)
 
@@ -234,14 +358,17 @@ def register_action(request):
     # register and login the user
     new_user = User.objects.create_user(username=form.cleaned_data['username'],
                                         password=form.cleaned_data['password'],
-                                        email=form.cleaned_data['email'], 
+                                        email=form.cleaned_data['email'],
                                         first_name=form.cleaned_data['first_name'],
                                         last_name=form.cleaned_data['last_name'])
     new_user.save()
 
     # create profile
-    new_profile = Profile(user=new_user)
+    new_profile = Profile.objects.create(user=new_user)
     new_profile.save()
+
+    new_player = Player.objects.create(player=new_user, game_id=None, word=None)
+    new_player.save()
 
     # authenticate and login the user
     new_user = authenticate(username=form.cleaned_data['username'],
