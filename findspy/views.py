@@ -1,3 +1,4 @@
+import datetime
 import json
 import random
 
@@ -7,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, Http404
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from findspy.models import Profile, Room, Player
 from findspy.forms import *
@@ -211,6 +213,7 @@ def join_room(request):
 
     context['room'] = room
     context['players'] = room.player.all()
+    context['profile'] = Profile.objects.get(user=request.user)
 
     player = Player.objects.get(player=request.user)
     if player not in room.player.all():
@@ -242,12 +245,52 @@ def join_room(request):
 
 
 @login_required
+@ensure_csrf_cookie
+def send_msg(request):
+    if not request.user.id:
+        return _my_json_error_response("You must be logged in to do this operation", status=404)
+    if request.method != 'POST':
+        return _my_json_error_response("You must use a POST request for this operation", status=404)
+    if 'content' not in request.POST or not request.POST['content']:
+        return _my_json_error_response("The post content is not valid.", status=404)
+
+    content = request.POST['content']
+    player = Player.objects.get(player=request.user)
+    new_msg = Message(player=player, content=content, timestamp=datetime.datetime.now())
+    new_msg.save()
+
+    return get_msg(request)
+
+
+@login_required
+@ensure_csrf_cookie
+def get_msg(request):
+    if not request.user.id:
+        return _my_json_error_response("You must be logged in to do this operation", status=403)
+
+    response_data = []
+    for msg in Message.objects.all():
+        msg = {
+            'id': msg.id,
+            'content': msg.content,
+            'gameID': msg.player.game_id,
+            'fname': msg.player.player.first_name,
+            'lname': msg.player.player.last_name,
+            'timestamp': timezone.localtime(msg.timestamp).strftime('%m/%d/%Y %I:%M %p'),
+        }
+        response_data.append(msg)
+
+    response_json = json.dumps(response_data)
+    return HttpResponse(response_json, content_type='application/json')
+
+
+@login_required
 def view_profile(request, user_id):
     profile = Profile.objects.get(user__id=user_id)
     context = {'page_name': 'Profile',
-               # 'profile_form': ProfileForm(instance=Profile.objects.all().get(user__id=user_id)),
                'profile': profile,
                }
+
     # for viewing and editing my profile
     if user_id == request.user.id:
         if request.method == 'POST':
@@ -274,9 +317,6 @@ def view_profile(request, user_id):
     else:
         context['following'] = False
 
-    # if request.method == 'GET':
-    #     return render(request, 'socialnetwork/profile-view.html', context)
-
     if request.method == 'POST':
         if request.POST['follow'] == 'unfollow':
             Profile.objects.get(user=request.user).following.remove(view_user)
@@ -300,10 +340,12 @@ def get_photo(request, profile_id):
 
 @login_required
 @ensure_csrf_cookie
-def get_player(request, room_id):
+def get_player(request, room_id): # stop calling when room.ready == True! (We'll call get_msg instead)
+    # if not user
     if not request.user.id:
         return _my_json_error_response("You must be logged in to do this operation", status=403)
 
+    # get the player info
     response_data = []
     room = get_object_or_404(Room, id=room_id)
     for player in room.player.all():

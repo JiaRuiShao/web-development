@@ -144,3 +144,51 @@ function getCSRFToken() {
     }
     return "unknown";
 }
+
+function sendMessage() {
+    var input = $('#send_msg')
+    var content = sanitize(input.val())
+    // console.log(content)
+    input.val('')
+
+    $.ajax({
+        url: "/findspy/send-msg",
+        type: "POST",
+        data: "content=" + content + "&csrfmiddlewaretoken=" + getCSRFToken(),
+        dataType: "json",
+        success: getMessage,
+        error: updateError,
+    });
+}
+
+function getMessage() {
+    $.ajax({
+        url: "/findspy/get-msg",
+        dataType: "json",
+        success: validateMsg,
+        error: updateError,
+    });
+    console.log('getMessage')
+}
+
+function validateMsg(response) {
+    if (Array.isArray(response)) {
+        updateMsg(response)
+    } else if (response.hasOwnProperty('error')) {
+        displayError(response.error)
+    } else {
+        displayError(response)
+    }
+}
+
+function updateMsg(response) {
+    $(response).each(function () {
+        if (document.getElementById("msg_" + this.id) == null) {
+            $("#testing").append(
+                '<p id="msg_' + this.id + '">' + ' ID: ' + this.id  + ' Content: ' +  this.content
+                + ' GameID: ' +  this.gameID  + ' Name: ' +
+                this.fname + this.lname  + ' Time: ' +  this.timestamp + '</p><br>'
+            )
+        }
+    })
+}

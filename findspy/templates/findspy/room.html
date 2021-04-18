@@ -22,7 +22,7 @@ Who is the SPY? - Home
                 <h2 class="quote">ROOM FOR FIVE</h2>
                 {% endif %}
                 <div class="col-sm-10" id="game-rules"></div>
-                <button class="btn btn-light btn-lg ml-ao " id="game_rule_button"
+                <button class="btn btn-light btn-lg ml-ao" id="game_rule_button"
                         onclick="displayRule();">Game Rules
                 </button>
             </div>
@@ -31,42 +31,82 @@ Who is the SPY? - Home
             {% if room.player.count != 0 %}
             <div id="display_player">
                 {% for player in players %}
-                <h6 class="col-sm-12 d-flex"><a class="text-info" href="{% url 'profile' player.player.id %}"id="{{ player.id }}">
-                    {{ player.player.first_name }} {{ player.player.last_name }}</a>, ID: {{ player.game_id }}, Identity: {{ player.identity }} , Word: {{ player.word }}</h6><div>
-            {% endfor %}
+                <h6 class="col-sm-12 d-flex"><a class="text-info" href="{% url 'profile' player.player.id %}"
+                                                id="{{ player.id }}">
+                    {{ player.player.first_name }} {{ player.player.last_name }}</a>, ID: {{ player.game_id }},
+                    Identity: {{ player.identity }} , Word: {{ player.word }}</h6>
+                <div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <br>
+                <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} Ready:
+                    {% if room.player.count == room.capacity %}
+                    True
+                    {% else %}
+                    False
+                    {% endif %}
+                </h5>
+                <br><br>
+                <div class="col-sm-11 d-flex" style="margin-bottom: 2rem">
+                    <form action="{% url 'exit_room' %}" method="post">
+                        <button class="btn btn-light btn-lg ml-auto" name="exit_room_id" onclick="exitRoom()"
+                                value="{{room.id}}">Exit Room
+                        </button>
+                        {% csrf_token %}
+                    </form>
+                </div>
             </div>
-            {% endif %}
-            <br>
-            <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} Ready: {{room.ready}}</h5>
-            <br><br>
-            <div class="col-sm-11 d-flex" style="margin-bottom: 2rem">
-                <form method="post" action="{% url 'exit_room' %}">
-                    <button name="exit_room_id" value="{{room.id}}" class="btn btn-light btn-lg" onclick="exitRoom()" style="background-color: #333; color: #f1f1f1; " >Exit Room</button>
-                    {% csrf_token %}
-                </form>
+        </div>
+        <br><hr>
+        <div class="col-sm-12"><br>
+            <h2>CHATS</h2>
+            <div class="col-sm-10 mx-auto" id="msg">
+                <div class="col-sm-10" id="testing"></div>
+                <div class="media border p-3">
+                    {% if profile.picture %}
+                    <img class="mr-3 mt-3 rounded-circle" src="{% url 'photo' profile.id %}" style="width:60px;"
+                         width="200px">
+                    {% else %}
+                    <img class="mr-3 mt-3 rounded-circle" src="/static/images/default.png" style="width:60px;"
+                         width="200px">
+                    {% endif %}
+                    <div class="media-body">
+                        <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                        <input class="form-control" id="send_msg">
+                        <button class="btn btn-light btn-lg ml-ao" id="send_msg_button"
+                                onclick="sendMessage()">Send
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    var room_id = {{ room.id }};
-    console.log("room id: " +  room_id);
-    window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
-    // window.onload = "displayPlayer(room_id)";
-    /*setInterval(function () {
-      displayPlayer(room_id)
-   }, 5000)*/
+    <script>
+        var room_id = {{room.id}};
+        console.log("room id: " + room_id);
+        var room_ready = "{{ room.ready }}";
+        if (room_ready != "True") {
+            window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
+        } else {
+            window.setInterval(getMessage, 5000);
+        }
 
-    /*setInterval(function () {
-      var room_ready = "{{ room.ready }}";
-      var ready = room_ready == "True";
-      console.log("room ready: " + ready);
-      if (ready) {
-          "setup(room_id)";
-      }
-   }, 5000)*/
+        // window.onload = "displayPlayer(room_id)";
+        /*setInterval(function () {
+          displayPlayer(room_id)
+       }, 5000)*/
 
-</script>
+        /*setInterval(function () {
+          var room_ready = "{{ room.ready }}";
+          var ready = room_ready == "True";
+          console.log("room ready: " + ready);
+          if (ready) {
+              "setup(room_id)";
+          }
+       }, 5000)*/
 
-{% endblock %}
+    </script>
+
+    {% endblock %}

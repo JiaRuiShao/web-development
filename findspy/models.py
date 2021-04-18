@@ -32,11 +32,12 @@ class Player(models.Model):
     word = models.CharField(max_length=50, null=True, blank=True, default=None)
     identity = models.CharField(max_length=50, null=True, blank=True, default=None)
 
+
 class Message(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.PROTECT, related_name="senders")
+    player = models.ForeignKey(Player, on_delete=models.PROTECT, related_name="message")
+    content = models.CharField(max_length=1000)
+    # round = models.IntegerField(null=True, blank=True, default=None)
     timestamp = models.DateTimeField()
-    room = models.ForeignKey("Room", on_delete=models.PROTECT, related_name="roomid")
-    message = models.CharField(max_length=1000)
 
     def __str__(self):
-        return self.message
+        return self.content
