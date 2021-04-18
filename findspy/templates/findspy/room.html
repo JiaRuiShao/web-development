@@ -32,7 +32,7 @@ Who is the SPY? - Home
             <div id="display_player">
                 {% for player in players %}
                 <h6 class="col-sm-12 d-flex"><a class="text-info" href="{% url 'profile' player.player.id %}"id="{{ player.id }}">
-                    {{ player.player.first_name }} {{ player.player.last_name }}</a>, "ID:" {{ player.game_id }}, "Word:" {{ player.word }}</h6><div>
+                    {{ player.player.first_name }} {{ player.player.last_name }}</a>, ID: {{ player.game_id }}, Identity: {{ player.identity }} , Word: {{ player.word }}</h6><div>
             {% endfor %}
             </div>
             {% endif %}

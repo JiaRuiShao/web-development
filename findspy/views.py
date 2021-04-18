@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
-from findspy.models import Profile, Room
+from findspy.models import Profile, Room, Player
 from findspy.forms import *
 
 
@@ -53,6 +53,7 @@ def create_room(request):
 
         return render(request, 'findspy/home.html', context)
 
+
 @login_required
 def exit_room(request):
     context = {}
@@ -84,6 +85,8 @@ def exit_room(request):
     context['error'] = "You have just exit room " + room_id
 
     return render(request, 'findspy/home.html', context)
+
+
 @login_required
 def return_room(request):
     context = {}
@@ -99,24 +102,22 @@ def return_room(request):
     
     return render(request, 'findspy/room.html', context)
 
+
 @login_required
-def assign_player_id_words(room_id):
-    players = Player.objects.filter(room = room_id)
+def assign_player_id_words(request, room):
+    players = room.player.all()
     game_sets_for_3 = {
         0: {
             0: "lion",
-            1: "tiger",
-            2: "tiger"
+            1: "tiger"
         },
         1: {
             0: "apple",
-            1: "apple",
-            2: "pineapple"
+            1: "pineapple"
         },
         2: {
             0: "laptop",
-            1: "desktop",
-            2: "laptop"
+            1: "desktop"
         }
     }
 
@@ -124,52 +125,69 @@ def assign_player_id_words(room_id):
         0: {
             0: "lion",
             1: "tiger",
-            2: "tiger",
-            3: "tiger",
-            4: ""
+            2: ""
         },
         1: {
-            0: "apple",
+            0: "pineapple",
             1: "apple",
-            2: "pineapple",
-            3: "",
-            4: "apple"
+            2: ""
         },
         2: {
             0: "laptop",
             1: "desktop",
-            2: "laptop",
-            3: "laptop",
-            4: ""
+            2: ""
         }
     }
 
     # add identity assignment
     if players.count() == 3:
-        set = random.randrange(0, len(game_sets_for_3))
-        words = game_sets_for_3[set].copy()
-        i = 0
-        while len(words) > 0:
-            word = words.pop(random.randrange(0, len(words)), None)
-            if word is None:
-                continue
-            else:
-                players[i].game_id = i
-                players[i].word = word
-                i += 1
 
-    if players.count() == 5:
-        set = random.randrange(0, len(game_sets_for_5))
-        words = game_sets_for_5[set].copy()
+        # select a random set
+        set_for_3 = random.randrange(0, len(game_sets_for_3))
+
+        # generate spy id
+        spy_id = random.randrange(0, players.count())
+
+        # assign id, identity, and word
         i = 0
-        while len(words) > 0:
-            word = words.pop(random.randrange(0, len(words)), None)
-            if word is None:
-                continue
+        for player in players:
+            player.game_id = i
+            i += 1
+            if player.game_id == spy_id:
+                player.identity = 'spy'
+                player.word = game_sets_for_3[set_for_3][0]
             else:
-                players[i].game_id = i
-                players[i].word = word
-                i += 1
+                player.identity = 'civilian'
+                player.word = game_sets_for_3[set_for_3][1]
+            player.save()
+
+    elif players.count() == 5:
+
+        # select a random set
+        set_for_5 = random.randrange(0, len(game_sets_for_5))
+
+        # generate spy ids (first one as the spy, second one as the Mr.White)
+        spy_id = []
+        while len(spy_id) < 2:
+            my_id = random.randrange(0, players.count())
+            if my_id not in spy_id:
+                spy_id.append(my_id)
+
+        # assign id, identity, and word
+        i = 0
+        for player in players:
+            player.game_id = i
+            i += 1
+            if player.game_id == spy_id[0]:
+                player.identity = 'spy'
+                player.word = game_sets_for_5[set_for_5][0]
+            elif player.game_id == spy_id[1]:
+                player.identity = 'Mr.White'
+                player.word = game_sets_for_5[set_for_5][2]
+            else:
+                player.identity = 'civilian'
+                player.word = game_sets_for_5[set_for_5][1]
+            player.save()
 
 
 @login_required
@@ -200,13 +218,11 @@ def join_room(request):
             if player.room == None:
                 if room.capacity > room.player.count():
                     room.player.add(player)
-
                     # player.room = room
-
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.save()
-                        assign_player_id_words(room.id)  # assign words and play id for each user in the room
+                        assign_player_id_words(request, room)  # assign words and play id for each user in the room
 
                     context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
