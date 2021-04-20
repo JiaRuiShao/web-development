@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from findspy.models import Profile, Room, Player
 from findspy.forms import *
-
+import os
 
 @login_required
 def home(request):
@@ -84,6 +84,9 @@ def exit_room(request):
     player.identity = None
     player.save()
 
+    for msg in Message.objects.filter(player_id = request.user.id):
+        msg.delete()
+
     context['error'] = "You have just exit room " + room_id
 
     return render(request, 'findspy/home.html', context)
@@ -108,38 +111,17 @@ def return_room(request):
 @login_required
 def assign_player_id_words(request, room):
     players = room.player.all()
-    game_sets_for_3 = {
-        0: {
-            0: "lion",
-            1: "tiger"
-        },
-        1: {
-            0: "apple",
-            1: "pineapple"
-        },
-        2: {
-            0: "laptop",
-            1: "desktop"
-        }
-    }
+    cwd = os.getcwd()  # Get the current working directory (cwd)
+    files = os.listdir(cwd)# Get all the files in that directory
+    print("Files in %r: %s" % (cwd, files))
 
-    game_sets_for_5 = {
-        0: {
-            0: "lion",
-            1: "tiger",
-            2: ""
-        },
-        1: {
-            0: "pineapple",
-            1: "apple",
-            2: ""
-        },
-        2: {
-            0: "laptop",
-            1: "desktop",
-            2: ""
-        }
-    }
+    f = open('./findspy/words_for_3.json')
+    game_sets_for_3 = json.load(f)
+    print(game_sets_for_3)
+
+    f2 = open('./findspy/words_for_5.json')
+    game_sets_for_5 = json.load(f2)
+    print(game_sets_for_5)
 
     # add identity assignment
     if players.count() == 3:
@@ -157,10 +139,10 @@ def assign_player_id_words(request, room):
             i += 1
             if player.game_id == spy_id:
                 player.identity = 'spy'
-                player.word = game_sets_for_3[set_for_3][0]
+                player.word = game_sets_for_3[set_for_3][str(0)]
             else:
                 player.identity = 'civilian'
-                player.word = game_sets_for_3[set_for_3][1]
+                player.word = game_sets_for_3[set_for_3][str(1)]
             player.save()
 
     elif players.count() == 5:
@@ -182,13 +164,13 @@ def assign_player_id_words(request, room):
             i += 1
             if player.game_id == spy_id[0]:
                 player.identity = 'spy'
-                player.word = game_sets_for_5[set_for_5][0]
+                player.word = game_sets_for_5[set_for_5][str(0)]
             elif player.game_id == spy_id[1]:
                 player.identity = 'Mr.White'
-                player.word = game_sets_for_5[set_for_5][2]
+                player.word = game_sets_for_5[set_for_5][str(2)]
             else:
                 player.identity = 'civilian'
-                player.word = game_sets_for_5[set_for_5][1]
+                player.word = game_sets_for_5[set_for_5][str(1)]
             player.save()
 
 
@@ -225,7 +207,7 @@ def join_room(request):
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.save()
-                        assign_player_id_words(request, room)  # assign words and play id for each user in the room
+                        assign_player_id_words(request, room)  # assign words and play id for each user in the room                       
 
                     context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
@@ -253,10 +235,19 @@ def send_msg(request):
         return _my_json_error_response("You must use a POST request for this operation", status=404)
     if 'content' not in request.POST or not request.POST['content']:
         return _my_json_error_response("The post content is not valid.", status=404)
+    if 'room_id' not in request.POST or not request.POST['room_id']:
+        return HttpResponse(status=404)
 
     content = request.POST['content']
     player = Player.objects.get(player=request.user)
-    new_msg = Message(player=player, content=content, timestamp=datetime.datetime.now())
+    current_room_id = request.POST['room_id']
+    if ((current_room_id).isdigit() == False):
+        message = 'not valid room_id'
+        return HttpResponse(status=404)
+    room = get_object_or_404(Room,id = current_room_id)
+
+    new_msg = Message(player=player, content=content, 
+        timestamp=datetime.datetime.now(),room = room)
     new_msg.save()
 
     return get_msg(request)
@@ -268,8 +259,12 @@ def get_msg(request):
     if not request.user.id:
         return _my_json_error_response("You must be logged in to do this operation", status=403)
 
+    player = Player.objects.get(player=request.user)
+    room = player.room
+    print(room)
+
     response_data = []
-    for msg in Message.objects.all():
+    for msg in Message.objects.filter(room_id = room.id):
         msg = {
             'id': msg.id,
             'content': msg.content,
@@ -355,6 +350,9 @@ def get_player(request, room_id): # stop calling when room.ready == True! (We'll
             'lname': player.player.last_name,
             'game_id': player.game_id,
             'word': player.word,
+            'room_ready': player.room.ready,
+            'room_id': player.room.id,
+            'username': player.player.username,
         }
         response_data.append(players)
     response_json = json.dumps(response_data)

@@ -26,32 +26,32 @@ Who is the SPY? - Home
                         onclick="displayRule();">Game Rules
                 </button>
             </div>
+            <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} </h5>
             <br><br>
-            <h5 class="col-sm-12 d-flex">Current Players: {{ room.player.count }}</h5>
+            {% if room.ready == False%}
+            <h5 class="col-sm-12 d-flex" id = "room_readiness"> Ready:&nbsp <span class=" text-danger">{{room.ready }}</span></h5>
+            {% else %}
+            <h5 class="col-sm-12 d-flex" id = "room_readiness"> Ready: &nbsp<span class=" text-success">{{room.ready }}</span></h5> 
+            {% endif %}
+            <br><br>
+            <h5 class="col-sm-2 d-flex col">Current Players:</h5>
             {% if room.player.count != 0 %}
             <div id="display_player">
                 {% for player in players %}
-                <h6 class="col-sm-12 d-flex"><a class="text-info" href="{% url 'profile' player.player.id %}"
-                                                id="{{ player.id }}">
-                    {{ player.player.first_name }} {{ player.player.last_name }}</a>, ID: {{ player.game_id }},
-                    Identity: {{ player.identity }} , Word: {{ player.word }}</h6>
-                <div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <br>
-                <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} Ready:
-                    {% if room.player.count == room.capacity %}
-                    True
-                    {% else %}
-                    False
-                    {% endif %}
-                </h5>
-                <br><br>
+                <h6 class="col-sm-12 d-flex col"><a class="text-info" href="{% url 'profile' player.player.id %}" id="{{ player.id }}">
+                {{ player.player.first_name }} {{ player.player.last_name }}</a></h6>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <br><br><br>
+            {% if room.ready == False%}
+            <h5 class="col-sm-12 d-flex" id = "your_word"> Your Word: None </h5><br><br>
+            {% else %}
+            <h5 class="col-sm-12 d-flex" id = "your_word"> Your Word: None </h5><br><br>
+            {% endif %}
                 <div class="col-sm-11 d-flex" style="margin-bottom: 2rem">
                     <form action="{% url 'exit_room' %}" method="post">
-                        <button class="btn btn-light btn-lg ml-auto" name="exit_room_id" onclick="exitRoom()"
-                                value="{{room.id}}">Exit Room
+                        <button class="btn btn-light btn-lg ml-auto" name="exit_room_id" id="exit_room_button" onclick="exitRoom()" value="{{room.id}}">Exit Room
                         </button>
                         {% csrf_token %}
                     </form>
@@ -74,8 +74,7 @@ Who is the SPY? - Home
                     <div class="media-body">
                         <h4>{{ user.first_name }} {{ user.last_name }}</h4>
                         <input class="form-control" id="send_msg">
-                        <button class="btn btn-light btn-lg ml-ao" id="send_msg_button"
-                                onclick="sendMessage()">Send
+                        <button class="btn btn-light btn-lg ml-ao" id="send_msg_button" onclick="sendMessage('{{room.id}}')" >Send
                         </button>
                     </div>
                 </div>
@@ -84,12 +83,17 @@ Who is the SPY? - Home
     </div>
 
     <script>
+        var myUserName = "{{ request.user.username }}"
         var room_id = {{room.id}};
+        console.log("username: " + myUserName);
+
         console.log("room id: " + room_id);
         var room_ready = "{{ room.ready }}";
+        console.log(room_ready)
         if (room_ready != "True") {
             window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
         } else {
+            window.setInterval("displayPlayer(room_id)", 5000);
             window.setInterval(getMessage, 5000);
         }
 

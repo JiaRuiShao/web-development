@@ -46,7 +46,7 @@ function displayRule() {
 }
 
 function exitRoom() {
-    confirm("Are you sure that you want to exit the room?")
+    alert("Are you sure that you want to exit the room?")
 }
 
 function displayPlayer(room_id) {
@@ -69,16 +69,39 @@ function validatePlayer(response) {
 }
 
 function displayName(response) {
+    $("#display_player").empty();
+    $("#your_word").empty();
+
+
     $(response).each(function () {
         if (document.getElementById(this.id) == null) {
+            if (this.room_ready == true){
+                $("#room_readiness").html(
+                 '<span class = "text-capitalize"> Ready: &nbsp<span class=" text-success">' + this.room_ready +
+                 '</span></span>');
+                $('#exit_room_button').prop('disabled', true);
+
+            }
+            if (this.room_ready == false){
+                $("#room_readiness").html(
+                 '<span class = "text-capitalize"> Ready: &nbsp <span class=" text-danger">' + this.room_ready +
+                 '</span></span>');
+            }
             $("#display_player").append(
-                '<h6 className="col-sm-12 d-flex"><a className="text-info" ' +
+                '<h6 class="col-sm-12 d-flex"><a class="link-info text-info" ' +
                 'href="/findspy/profile/' + this.id + '" id="' + this.id + '">' +
-                this.fname + ' ' + this.lname + '</a></h6><div>'
-            )
+                this.fname + ' ' + this.lname + '</a></h6>'
+            );}
+            if (this.room_ready == true && this.username == myUserName){
+                $("#your_word").html('<span class = "text-capitalize"> Your Word: ' + this.word +'</span>');                
+            }
+            if (this.room_ready == false && this.username == myUserName){
+                $("#your_word").html('<span class = "text-capitalize"> Your Word: None'  +'</span>');
         }
+
     })
 }
+
 
 function setup(room_id) {
     $.ajax({
@@ -145,7 +168,7 @@ function getCSRFToken() {
     return "unknown";
 }
 
-function sendMessage() {
+function sendMessage(room_id) {
     var input = $('#send_msg')
     var content = sanitize(input.val())
     // console.log(content)
@@ -154,7 +177,8 @@ function sendMessage() {
     $.ajax({
         url: "/findspy/send-msg",
         type: "POST",
-        data: "content=" + content + "&csrfmiddlewaretoken=" + getCSRFToken(),
+        data: "content=" + content + "&csrfmiddlewaretoken=" 
+        + getCSRFToken() +'&room_id=' + room_id,
         dataType: "json",
         success: getMessage,
         error: updateError,

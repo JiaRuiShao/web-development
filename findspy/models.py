@@ -34,10 +34,12 @@ class Player(models.Model):
 
 
 class Message(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.PROTECT, related_name="message")
+    player = models.ForeignKey(Player, default=None, on_delete=models.PROTECT, related_name="message")
     content = models.CharField(max_length=1000)
     # round = models.IntegerField(null=True, blank=True, default=None)
     timestamp = models.DateTimeField()
+    content = models.CharField(max_length=1000)
+    room = models.ForeignKey(Room, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.content
