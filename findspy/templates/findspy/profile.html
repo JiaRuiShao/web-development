@@ -11,9 +11,11 @@ Who is the SPY? - Profile
 {% endblock %}
 
 {% block container %}
+<br><br>
 <div class="container-fluid text-center mx-auto"
      style="font-size: 20px;">
-    <div>
+        <div class="h4"> Profile Page for <span class="text-capitalize">{{profile.user.first_name}} {{profile.user.last_name}} </span></div><br><br>
+        <div>
         <div class="user-img">
             {% if profile.picture %}
             <img src="{% url 'photo' profile.id %}" width="200px">
@@ -30,7 +32,7 @@ Who is the SPY? - Profile
                 <input id="id_profile_picture" name="picture" type="file"></input>
                 </span>
                 {% csrf_token %}
-                <textarea class="text-center form-control z-depth-1" id="id_bio_input_text" name="bio" rows="3" style="resize: none" type="text">{{ profile.bio }}</textarea>
+                <textarea class="text-center form-control z-depth-1" id="id_bio_input_text" name="bio" rows="3" cols="50" style="resize: none" type="text">{{ profile.bio }}</textarea>
                 <br>
                 <input class="btn btn-light btn-lg" type="submit" value="Submit">
 
@@ -38,11 +40,11 @@ Who is the SPY? - Profile
         </form>
     </div>
     <div class="user-following">
-        {% if user.profile_user.following.all.count > 1 %}
+        {% if user.profile_user.following.all.count > 0 %}
         <br/><br/>You are following:
-        <ul>
+        <ul class="list-unstyled no-bullets">
             {% for follower in user.profile_user.following.all %}
-            <li><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
+            <li class="text-center"><a href="{% url 'profile' follower.id %}" id="id_profile_link_{{ follower.username }}">
                 {{ follower.first_name }} {{ follower.last_name }}</a></li>
             {% endfor %}
         </ul>
