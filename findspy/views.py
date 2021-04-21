@@ -1,7 +1,6 @@
 import datetime
 import json
 import random
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -12,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from findspy.models import Profile, Room, Player
 from findspy.forms import *
-import os
+from notifications.signals import notify
 
 @login_required
 def home(request):
@@ -40,6 +39,8 @@ def create_room(request):
         context['error'] = 'invalid room capacity'
 
     player = Player.objects.get(player=request.user)
+    current_profile = Profile.objects.get(user=request.user)
+    friends = current_profile.following.all()
 
     if player.room == None:
         room = Room.objects.create(capacity=new_room_capacity, ready=False)
@@ -47,7 +48,8 @@ def create_room(request):
         room.save()
         # player.room = room # add the room creator into the room
 
-        context = {'room': room, 'players': room.player.all()}
+        context = {'room': room, 'players': room.player.all(),
+         'friends': friends}
         return render(request, 'findspy/room.html', context)
     else:
         context['error'] = 'You cannot join multiple room at the same time.'
@@ -101,7 +103,10 @@ def return_room(request):
 
     player = Player.objects.get(player=request.user)
     room = player.room
+    current_profile = Profile.objects.get(user=request.user)
+    friends = current_profile.following.all()
 
+    context['friends'] = friends
     context['room'] = room
     context['players'] = room.player.all()
     
@@ -111,17 +116,12 @@ def return_room(request):
 @login_required
 def assign_player_id_words(request, room):
     players = room.player.all()
-    cwd = os.getcwd()  # Get the current working directory (cwd)
-    files = os.listdir(cwd)# Get all the files in that directory
-    print("Files in %r: %s" % (cwd, files))
 
     f = open('./findspy/words_for_3.json')
     game_sets_for_3 = json.load(f)
-    print(game_sets_for_3)
 
     f2 = open('./findspy/words_for_5.json')
     game_sets_for_5 = json.load(f2)
-    print(game_sets_for_5)
 
     # add identity assignment
     if players.count() == 3:
@@ -198,6 +198,10 @@ def join_room(request):
     context['profile'] = Profile.objects.get(user=request.user)
 
     player = Player.objects.get(player=request.user)
+    current_profile = Profile.objects.get(user=request.user)
+    friends = current_profile.following.all()
+    context['friends'] = friends
+
     if player not in room.player.all():
         if room.capacity == 3 or room.capacity == 5:
             if player.room == None:
@@ -225,6 +229,83 @@ def join_room(request):
         context['error'] = 'You have already been in the room.'
         return render(request, 'findspy/room.html', context)
 
+@login_required
+def invite_friend(request):
+    context = {}
+    if request.method == 'GET':
+        context['error'] = 'You need a POST request.'
+        return render(request, 'findspy/home.html', context)
+
+    if 'invite_room_id' not in request.POST or not request.POST['invite_room_id'].isnumeric():
+        context['error'] = 'The room id is not valid'
+        return render(request, 'findspy/home.html', context)
+
+    room_id = request.POST.get('invite_room_id')
+    try:
+        room = Room.objects.get(id=room_id)
+    except Exception:
+        context['error'] = 'The room does not exist!'
+        return render(request, 'findspy/room.html', context)
+
+    context['room'] = room
+
+    if 'invite_friend_id' not in request.POST or not request.POST['invite_friend_id'].isnumeric():
+        context['error'] = 'The friend user does not exist'
+        return render(request, 'findspy/room.html', context)
+
+    friend_id = request.POST.get('invite_friend_id')
+
+    context['players'] = room.player.all()
+    context['profile'] = Profile.objects.get(user=request.user)
+
+    invited_friend = User.objects.get(id=friend_id)
+    invited_player = Player.objects.get(player=invited_friend)
+
+    player = Player.objects.get(player=request.user)
+    sender = User.objects.get(username=request.user)
+    current_profile = Profile.objects.get(user=request.user)
+    friends = current_profile.following.all()
+    context['friends'] = friends
+
+    if invited_player not in room.player.all():
+        if room.capacity == 3 or room.capacity == 5:
+            if invited_player.room == None:
+                if room.capacity > room.player.count():
+                    room.player.add(invited_player)
+                    room.save()
+                    invited_player.save()
+                    
+                    message= '<a href="user_mark_all_read">' + 'invite you to a room </a>'
+                    notify.send(sender, recipient=invited_friend, 
+                        verb= message, description=message)
+
+                    # player.room = room
+                    if room.capacity == room.player.count():
+                        room.ready = True
+                        room.save()
+                        assign_player_id_words(request, room)  # assign words and play id for each user in the room                       
+
+                    context['players'] = room.player.all()
+                    return render(request, 'findspy/room.html', context)
+                else:
+                    context['error'] = 'The room is full.'
+                    return render(request, 'findspy/room.html', context)
+            else:
+                context['error'] = 'This friend cannot join multiple room at the same time.'
+                return render(request, 'findspy/room.html', context)
+
+        else:
+            context['error'] = 'This room has a invalid room capacity'
+            return render(request, 'findspy/room.html', context)
+    else:
+        context['error'] = 'This friend have already been in the room.'
+        return render(request, 'findspy/room.html', context)
+
+def user_mark_all_read(request):
+    user = request.user
+    notifies = user.notifications.all()
+    notifies.mark_all_as_read()
+    return redirect(reverse('return_room'))
 
 @login_required
 @ensure_csrf_cookie
@@ -261,7 +342,6 @@ def get_msg(request):
 
     player = Player.objects.get(player=request.user)
     room = player.room
-    print(room)
 
     response_data = []
     for msg in Message.objects.filter(room_id = room.id):
