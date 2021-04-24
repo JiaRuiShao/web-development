@@ -58,6 +58,30 @@ function displayPlayer(room_id) {
     });
 }
 
+function updateGame(response) {
+    $.ajax({
+        url: "/findspy/update_game",
+        dataType: "json",
+        success: displayGame,
+        error: updateError,
+    });
+    console.log('getMessage')
+}
+
+function displayGame(response) {
+
+    $(response).each(function () {
+        if (this.room_ready == true && this.username == myUserName){
+            $('#send_msg_button').prop('disabled', false);
+                
+        }
+        else{
+            $('#send_msg_button').prop('disabled', true);
+        }
+    })
+}
+
+
 function validatePlayer(response) {
     if (Array.isArray(response)) {
         displayName(response)
@@ -71,7 +95,6 @@ function validatePlayer(response) {
 function displayName(response) {
     $("#display_player").empty();
     $("#your_word").empty();
-
 
     $(response).each(function () {
         if (document.getElementById(this.id) == null) {
@@ -93,51 +116,15 @@ function displayName(response) {
                 this.fname + ' ' + this.lname + '</a></h6>'
             );}
             if (this.room_ready == true && this.username == myUserName){
-                $("#your_word").html('<span class = "text-capitalize"> Your Word: ' + this.word +'</span>');                
+                $("#your_word").html('<span class = "text-capitalize"> Your Word: ' + this.word +'</span>'); 
+                $('#send_msg_button').prop('disabled', true);
+             
             }
-            if (this.room_ready == false && this.username == myUserName){
-                $("#your_word").html('<span class = "text-capitalize"> Your Word: None'  +'</span>');
-        }
+            if (this.room_ready == false && this.username == myUserName) {
+                $("#your_word").html('<span class = "text-capitalize"> Your Word: None' + '</span>');
+                $('#send_msg_button').prop('disabled', true);
 
-    })
-}
-
-
-function setup(room_id) {
-    $.ajax({
-        url: "/findspy/get-player/" + room_id,
-        dataType: "json",
-        success: validate,
-        error: updateError,
-    });
-}
-
-function validate(response) {
-    if (Array.isArray(response)) {
-        assignIDWords(response)
-    } else if (response.hasOwnProperty('error')) {
-        displayError(response.error)
-    } else {
-        displayError(response)
-    }
-}
-
-function assignIDWords(response) {
-    console.log(response.length)
-    let ids = [Array(response.length).keys()], idx;
-    // _.range(10);
-    // or create a set of integers, only allowed to add index when
-    let words = ['tiger', 'tiger', 'lion']
-    $(response).each(function () {
-        while (true) {
-            idx = Math.floor(Math.random() * ids.length);
-            if (ids[idx] != undefined) {
-                break;
             }
-        }
-        this.game_id = ids[idx];
-        this.word = words[idx];
-        delete ids[idx];
     })
 }
 
@@ -215,4 +202,15 @@ function updateMsg(response) {
             )
         }
     })
+}
+
+function startTiming(response) {
+    var sec = 30
+    var timer = setInterval(function() {
+       $('#time span').text(sec--);
+        if (sec < 0) {
+          $('#time').fadeOut('fast');
+          clearInterval(timer);
+       }
+    }, 1000);
 }

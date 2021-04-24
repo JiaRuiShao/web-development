@@ -16,6 +16,9 @@ class Profile(models.Model):
 class Room(models.Model):
     capacity = models.IntegerField(default=3)
     ready = models.BooleanField(default=False)
+    timeEnd = models.DateTimeField(null=True, blank=True, default=None)
+    playerTurn = models.IntegerField(null=True, blank=True, default=None)
+    chat_time = models.BooleanField(null=True, blank=True, default=None)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -31,6 +34,7 @@ class Player(models.Model):
     game_id = models.IntegerField(null=True, blank=True, default=None)
     word = models.CharField(max_length=50, null=True, blank=True, default=None)
     identity = models.CharField(max_length=50, null=True, blank=True, default=None)
+    is_dead = models.BooleanField(default=False)
 
 
 class Message(models.Model):

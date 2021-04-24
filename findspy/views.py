@@ -9,9 +9,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
-from findspy.models import Profile, Room, Player
+from findspy.models import *
 from findspy.forms import *
 from notifications.signals import notify
+from timeit import default_timer as timer
+
 
 @login_required
 def home(request):
@@ -174,12 +176,82 @@ def assign_player_id_words(request, room):
             player.save()
 
 
+def voting(request):
+    if request.POST and request.POST['eliminate_id'] and request.POST['eliminate_id'].isnumeric():
+        return request.POST['eliminate_id']
+    else:
+        # some error here
+        return None
+
+
+def update_game(request):
+    # start the game
+    
+    context = {}
+    # get the player info
+    response_data = []
+    room = get_object_or_404(Room, id=room_id)
+
+    players = room.player.all()
+    
+
+    for i in range(players.count()):
+        print( 'i = ' + str(i))
+        if(players[i] == players[players.count()-1]):
+            room.save()
+
+        print("player" + " is dead "+ players[i].is_dead)
+
+        if (players[i].is_dead == False ):
+                current_player = players[i]
+
+                current_player.save()
+                current_typing_player = {
+                    'username': current_player.player.username,
+                    'room_ready': current_player.room.ready,
+                }
+                response_data.append(current_typing_player)
+                response_json = json.dumps(response_data)
+                return HttpResponse(response_json, content_type='application/json')
+
+    context['error'] = 'something wrong!!!'
+    return render(request, 'findspy/home.html', context)
+
+        #while len(exist_players_id) > 2:
+            #for idx in np.arange(len(exist_players_id)):
+                # player#idx typing...(?)
+                #start_typing(request, room)
+                # set time limit as 30s for each user
+                #start = timer()
+                #while timer() - start <= 30:
+                    #continue
+            # player#1 stop typing(?)
+            # player#2 typing...
+            # player#2 stop typing
+            # player#3 typing...
+            # player#3 stop typing
+
+            #eliminate_id = voting(request) # this doesn't work
+            #exist_players_id.pop(eliminate_id)
+
+            # how to get the eliminated user id(?)
+            # remove the player (id) who got eliminated from exist_players_id
+
+
+
 @login_required
 def join_room(request):
     context = {}
     if request.method == 'GET':
         context['error'] = 'You need a POST request.'
         return render(request, 'findspy/home.html', context)
+
+    # if request.POST['voting'] and request.POST['voting'].isnumeric():
+    #     # post the eliminated user id here
+    #
+    #     context['error'] = 'The room id is not valid'
+    #     return render(request, 'findspy/home.html', context)
+
 
     if 'room_search_id' not in request.POST or not request.POST['room_search_id'].isnumeric():
         context['error'] = 'The room id is not valid'
@@ -211,8 +283,8 @@ def join_room(request):
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.save()
-                        assign_player_id_words(request, room)  # assign words and play id for each user in the room                       
-
+                        # assign user id, word, identity for each user in the room
+                        assign_player_id_words(request, room)
                     context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
                 else:
@@ -322,10 +394,10 @@ def send_msg(request):
     content = request.POST['content']
     player = Player.objects.get(player=request.user)
     current_room_id = request.POST['room_id']
-    if ((current_room_id).isdigit() == False):
+    if not current_room_id.isdigit():
         message = 'not valid room_id'
         return HttpResponse(status=404)
-    room = get_object_or_404(Room,id = current_room_id)
+    room = get_object_or_404(Room, id=current_room_id)
 
     new_msg = Message(player=player, content=content, 
         timestamp=datetime.datetime.now(),room = room)

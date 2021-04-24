@@ -29,54 +29,65 @@ Who is the SPY? - Home
             <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} </h5>
             <br><br>
             {% if room.ready == False%}
-            <h5 class="col-sm-12 d-flex" id = "room_readiness"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{room.ready }}</span></h5>
+            <h5 class="col-sm-12 d-flex" id="room_readiness_"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{room.ready }}</span>
+            </h5>
             {% else %}
-            <h5 class="col-sm-12 d-flex" id = "room_readiness"> Ready: &nbsp; &nbsp;<span class=" text-success">{{room.ready }}</span></h5> 
+            <h5 class="col-sm-12 d-flex" id="room_readiness"> Ready: &nbsp; &nbsp;<span class=" text-success">{{room.ready }}</span>
+            </h5>
             {% endif %}
             <br><br>
             <h5 class="col-sm-2 d-flex col">Current Players:</h5>
             <div class="row">
-            {% if room.player.count != 0 %}
-            <div id="display_player" class="col-xl-12">
-                {% for player in players %}
-                <h6 class="col-sm-12 d-flex col"><a class="text-info" href="{% url 'profile' player.player.id %}" id="{{ player.id }}">
-                {{ player.player.first_name }} {{ player.player.last_name }}</a></h6>
-                {% endfor %}
-            </div>
-            <form method="post" action="{% url 'invite_friend' %}">
-                <div class="input-group col-xl-12">
-                    {% csrf_token %}
-                    <select name="invite_friend_id" class="form-control">
-                    <option selected>Invite Friends...</option>
-                    {% for friend in friends %}
-                    <option value = "{{friend.id}}">{{friend.first_name }} {{ friend.last_name }}</option>
+                {% if room.player.count != 0 %}
+                <div class="col-xl-12" id="display_player">
+                    {% for player in players %}
+                    <h6 class="col-sm-12 d-flex col"><a class="text-info" href="{% url 'profile' player.player.id %}"
+                                                        id="{{ player.id }}">
+                        {{ player.player.first_name }} {{ player.player.last_name }}</a></h6>
                     {% endfor %}
-                    </select>
-                    <span class="input-group-btn">
-                    <button type="submit" class="btn btn-light btn-secondary" name = "invite_room_id" value = "{{room.id}}">Invite</button></span>
+                 </div>
+
+                    {% if room.ready == False %}
+                    <form action="{% url 'invite_friend' %}" method="post">
+                        <div class="input-group col-xl-12">
+                            {% csrf_token %}
+                            <select class="form-control" name="invite_friend_id">
+                                <option selected>Invite Friends...</option>
+                                {% for friend in friends %}
+                                <option value="{{friend.id}}">{{friend.first_name }} {{ friend.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="input-group-btn">
+                            <button class="btn btn-light btn-secondary" name="invite_room_id" type="submit" value="{{room.id}}">Invite</button></span>
+                        </div>
+                    </form>
+                    {% endif %}
+                    <br><br><br>
                 </div>
-            </form>
-            {% endif %}
-            <br><br><br>
-            </div>
-            <br>
-            {% if room.ready == False%}
-            <h5 class="col-sm-12 d-flex" id = "your_word"> Your Word: None </h5><br><br>
-            {% else %}
-            <h5 class="col-sm-12 d-flex" id = "your_word"> Your Word: None </h5><br><br>
-            {% endif %}
+                {% endif %}
+                <br>
+                {% if room.ready == False%}
+                <h5 class="col-sm-12 d-flex" id="your_word_"> Your Word: None </h5><br><br>
+                {% else %}
+                <h5 class="col-sm-12 d-flex" id="your_word"> Your Word: None </h5><br><br>
+                {% endif %}
                 <div class="col-sm-11 d-flex" style="margin-bottom: 2rem">
                     <form action="{% url 'exit_room' %}" method="post">
-                        <button class="btn btn-light btn-lg ml-auto" name="exit_room_id" id="exit_room_button" onclick="exitRoom()" value="{{room.id}}">Exit Room
+                        <button class="btn btn-light btn-lg ml-auto" id="exit_room_button" name="exit_room_id"
+                                onclick="exitRoom()" value="{{room.id}}">Exit Room
                         </button>
                         {% csrf_token %}
                     </form>
                 </div>
             </div>
         </div>
-        <br><hr>
+        <br>
+        <hr>
+        <!-- Chats -->
+        <p class="text-danger float-right" id="time">Seconds left: <span></span></p>
         <div class="col-sm-12"><br>
             <h2>CHATS</h2>
+
             <div class="col-sm-10 mx-auto" id="msg">
                 <div class="col-sm-10" id="testing"></div>
                 <div class="media border p-3">
@@ -90,7 +101,8 @@ Who is the SPY? - Home
                     <div class="media-body">
                         <h4>{{ user.first_name }} {{ user.last_name }}</h4>
                         <input class="form-control" id="send_msg">
-                        <button class="btn btn-light btn-lg ml-ao" id="send_msg_button" onclick="sendMessage('{{room.id}}')" >Send
+                        <button class="btn btn-light btn-lg ml-ao" id="send_msg_button"
+                                onclick="sendMessage('{{room.id}}')">Send
                         </button>
                     </div>
                 </div>
@@ -109,8 +121,10 @@ Who is the SPY? - Home
         if (room_ready != "True") {
             window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
         } else {
+            startTiming(); // put here for debug
             window.setInterval("displayPlayer(room_id)", 5000);
             window.setInterval(getMessage, 5000);
+            window.setInterval("gameOn(room_id)", 5000); // auto update
         }
 
         // window.onload = "displayPlayer(room_id)";
