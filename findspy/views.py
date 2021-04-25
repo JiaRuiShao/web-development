@@ -1,6 +1,7 @@
 import datetime
 import json
 import random
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -81,6 +82,7 @@ def exit_room(request):
         return render(request, 'findspy/room.html', context)
 
     room.ready = False
+    room.playerTurn = 0
     room.save()
     player.room = None
     player.game_id = 0
@@ -175,7 +177,7 @@ def assign_player_id_words(request, room):
                 player.word = game_sets_for_5[set_for_5][str(1)]
             player.save()
 
-
+@login_required
 def voting(request):
     if request.POST and request.POST['eliminate_id'] and request.POST['eliminate_id'].isnumeric():
         return request.POST['eliminate_id']
@@ -183,39 +185,62 @@ def voting(request):
         # some error here
         return None
 
-
+@login_required
 def update_game(request):
     # start the game
-    
     context = {}
     # get the player info
     response_data = []
-    room = get_object_or_404(Room, id=room_id)
+    player = Player.objects.get(player=request.user)
+    room = player.room
+    player_turn_id = room.playerTurn
+    player_turn = Player.objects.get(game_id=player_turn_id, room_id = room.id)    
 
-    players = room.player.all()
     
+    time_left = room.timeEnd - timezone.now()
+    seconds_left = time_left.total_seconds()
 
-    for i in range(players.count()):
-        print( 'i = ' + str(i))
-        if(players[i] == players[players.count()-1]):
-            room.save()
+    if (room.chat_time == True):
+        if (player_turn.is_dead == True):
+            if (room.playerTurn == (room.player.count() - 1)):
+                room.chat_time = False 
+                ### Vote Function (set timeEnd, set playerTurn to 0)
+                room.save()
 
-        print("player" + " is dead "+ players[i].is_dead)
+            else: 
+                room.playerTurn =+ 1
+                room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+                room.save()
 
-        if (players[i].is_dead == False ):
-                current_player = players[i]
+        else: 
+            if (room.timeEnd <= timezone.now()):
+                if (room.playerTurn == (room.player.count() - 1)):
+                    ##vote Function
+                    print('voting')
+                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+                    room.playerTurn = 0
+                    room.save()
 
-                current_player.save()
-                current_typing_player = {
-                    'username': current_player.player.username,
-                    'room_ready': current_player.room.ready,
-                }
-                response_data.append(current_typing_player)
-                response_json = json.dumps(response_data)
-                return HttpResponse(response_json, content_type='application/json')
+                else: 
+                    room.playerTurn = player_turn_id + 1
+                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+                    room.save()
 
-    context['error'] = 'something wrong!!!'
-    return render(request, 'findspy/home.html', context)
+    for player in room.player.all():
+        players = {
+            'username': player.player.username,
+            'room_timeEnd' : room.timeEnd.isoformat(),
+            'room_chat_time' : room.chat_time,
+            'current_time': timezone.now().isoformat(),
+            'player_turn_username': player_turn.player.username,
+            'player_turn_first_name': player_turn.player.first_name,
+            'player_turn_last_name': player_turn.player.last_name,
+            'time_left': int(seconds_left),
+        }
+        response_data.append(players)
+    response_json = json.dumps(response_data)
+    return HttpResponse(response_json, content_type='application/json')
+    
 
         #while len(exist_players_id) > 2:
             #for idx in np.arange(len(exist_players_id)):
@@ -282,6 +307,9 @@ def join_room(request):
                     # player.room = room
                     if room.capacity == room.player.count():
                         room.ready = True
+                        room.playerTurn = 0
+                        room.chat_time = True
+                        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                         room.save()
                         # assign user id, word, identity for each user in the room
                         assign_player_id_words(request, room)
@@ -343,6 +371,10 @@ def invite_friend(request):
         if room.capacity == 3 or room.capacity == 5:
             if invited_player.room == None:
                 if room.capacity > room.player.count():
+                    room.ready = True
+                    room.playerTurn = 0
+                    room.chat_time = True
+                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.player.add(invited_player)
                     room.save()
                     invited_player.save()
@@ -402,6 +434,24 @@ def send_msg(request):
     new_msg = Message(player=player, content=content, 
         timestamp=datetime.datetime.now(),room = room)
     new_msg.save()
+
+    room = player.room
+    if (room.playerTurn == (room.player.count() - 1)):
+        room.chat_time = False 
+        ### Vote Function (set timeEnd, set playerTurn to 0)
+        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+        room.playerTurn = 0
+        room.save()
+        print(777777)
+        print(room.playerTurn)
+    else: 
+        print(room.playerTurn)
+        room.playerTurn =+ 1
+        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+        room.save()
+        print(6666666666)
+        print(room.playerTurn)
+
 
     return get_msg(request)
 

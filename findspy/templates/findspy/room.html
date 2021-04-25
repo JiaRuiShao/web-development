@@ -84,8 +84,9 @@ Who is the SPY? - Home
         <br>
         <hr>
         <!-- Chats -->
-        <p class="text-danger float-right" id="time">Seconds left: <span></span></p>
-        <div class="col-sm-12"><br>
+        <div class="col-sm-12" id = "chat_block"><br>
+        <p class="text-danger float-right" id="game-messages"></p>
+
             <h2>CHATS</h2>
 
             <div class="col-sm-10 mx-auto" id="msg">
@@ -99,7 +100,7 @@ Who is the SPY? - Home
                          width="200px">
                     {% endif %}
                     <div class="media-body">
-                        <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                        <h5>{{ user.first_name }} {{ user.last_name }}</h5>
                         <input class="form-control" id="send_msg">
                         <button class="btn btn-light btn-lg ml-ao" id="send_msg_button"
                                 onclick="sendMessage('{{room.id}}')">Send
@@ -115,16 +116,13 @@ Who is the SPY? - Home
         var room_id = {{room.id}};
         console.log("username: " + myUserName);
 
-        console.log("room id: " + room_id);
         var room_ready = "{{ room.ready }}";
-        console.log(room_ready)
         if (room_ready != "True") {
             window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
         } else {
-            startTiming(); // put here for debug
-            window.setInterval("displayPlayer(room_id)", 5000);
+            window.setInterval("displayPlayer(room_id)", 1000);
+            window.setInterval("updateGame()", 1000);
             window.setInterval(getMessage, 5000);
-            window.setInterval("gameOn(room_id)", 5000); // auto update
         }
 
         // window.onload = "displayPlayer(room_id)";

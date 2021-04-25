@@ -4,7 +4,6 @@ function changeProfile() {
 
 // doesn't work b/c onload does not apply to div tag, has to be applied to body tag
 function userVisitCount() {
-    console.log('blahblahblah')
     console.log(Storage, localStorage.visitCount)
     if (typeof (Storage) !== "undefined") {
         if (localStorage.visitCount === "undefined" || localStorage.visitCount === "NaN") {
@@ -65,18 +64,27 @@ function updateGame(response) {
         success: displayGame,
         error: updateError,
     });
-    console.log('getMessage')
 }
 
 function displayGame(response) {
-
     $(response).each(function () {
-        if (this.room_ready == true && this.username == myUserName){
-            $('#send_msg_button').prop('disabled', false);
-                
-        }
-        else{
-            $('#send_msg_button').prop('disabled', true);
+        if (this.room_chat_time == true){
+            console.log(this.player_turn_username)
+            console.log(this.room_timeEnd)
+            console.log(this.current_time)
+            console.log(myUserName)
+            if (this.player_turn_username == myUserName){
+                $('#send_msg_button').prop('disabled', false);  
+                $("#game-messages").html(
+                '<h5 id="game-messages">Seconds left: ' + this.time_left +'</h5>');   
+            }else{
+                $('#send_msg_button').prop('disabled', true);
+                $("#game-messages").html(
+                '<h5 id="game-messages">' + this.player_turn_first_name +
+                '&nbsp'+ this.player_turn_last_name + ' is typing... </h5>');  
+            }
+        }else{
+            //vote time
         }
     })
 }
@@ -103,7 +111,7 @@ function displayName(response) {
                  '<span class = "text-capitalize"> Ready: &nbsp<span class=" text-success">' + this.room_ready +
                  '</span></span>');
                 $('#exit_room_button').prop('disabled', true);
-
+                $('#chat_block').show();
             }
             if (this.room_ready == false){
                 $("#room_readiness").html(
@@ -118,7 +126,7 @@ function displayName(response) {
             if (this.room_ready == true && this.username == myUserName){
                 $("#your_word").html('<span class = "text-capitalize"> Your Word: ' + this.word +'</span>'); 
                 $('#send_msg_button').prop('disabled', true);
-             
+                $('#chat_block').show();
             }
             if (this.room_ready == false && this.username == myUserName) {
                 $("#your_word").html('<span class = "text-capitalize"> Your Word: None' + '</span>');
@@ -179,7 +187,6 @@ function getMessage() {
         success: validateMsg,
         error: updateError,
     });
-    console.log('getMessage')
 }
 
 function validateMsg(response) {
