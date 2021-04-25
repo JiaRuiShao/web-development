@@ -29,7 +29,7 @@ Who is the SPY? - Home
             <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} </h5>
             <br><br>
             {% if room.ready == False%}
-            <h5 class="col-sm-12 d-flex" id="room_readiness_"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{ room.ready }}</span>
+            <h5 class="col-sm-12 d-flex" id="room_readiness"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{ room.ready }}</span>
             </h5>
             {% else %}
             <h5 class="col-sm-12 d-flex" id="room_readiness"> Ready: &nbsp; &nbsp;<span class=" text-success">{{ room.ready }}</span>
@@ -67,7 +67,7 @@ Who is the SPY? - Home
                 {% endif %}
                 <br>
                 {% if room.ready == False%}
-                <h5 class="col-sm-12 d-flex" id="your_word_"> Your Word: None </h5><br><br>
+                <h5 class="col-sm-12 d-flex" id="your_word"> Your Word: None </h5><br><br>
                 {% else %}
                 <h5 class="col-sm-12 d-flex" id="your_word"> Your Word: None </h5><br><br>
                 {% endif %}
@@ -150,13 +150,13 @@ Who is the SPY? - Home
 
             window.setInterval(function () {
                 updateGame()
-                displayPlayer(room_id);
+                displayPlayer();
             }, 1000);
 
             // window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
             // startTiming(); // put here for debug
         } else {
-            window.setInterval("displayPlayer(room_id)", 5000);
+            window.setInterval("displayPlayer()", 5000);
             // window.setInterval("gameOn(room_id)", 5000); // auto update
         }
 
