@@ -19,6 +19,10 @@ class Room(models.Model):
     timeEnd = models.DateTimeField(null=True, blank=True, default=None)
     playerTurn = models.IntegerField(null=True, blank=True, default=None)
     chat_time = models.BooleanField(null=True, blank=True, default=None)
+    game_end = models.BooleanField(null=True, blank=True, default=False)
+    winner = models.CharField(max_length=200, null=True, blank=True, default=None)
+    msg = models.CharField(max_length=200, null=True, blank=True, default=None)
+    voteTime = models.DateTimeField(null=True, blank=True, default=None)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -35,14 +39,13 @@ class Player(models.Model):
     word = models.CharField(max_length=50, null=True, blank=True, default=None)
     identity = models.CharField(max_length=50, null=True, blank=True, default=None)
     is_dead = models.BooleanField(default=False)
+    vote = models.IntegerField(null=True, blank=True, default=None)
 
 
 class Message(models.Model):
     player = models.ForeignKey(Player, default=None, on_delete=models.PROTECT, related_name="message")
-    content = models.CharField(max_length=1000)
-    # round = models.IntegerField(null=True, blank=True, default=None)
+    content = models.CharField(max_length=1000, default=None)
     timestamp = models.DateTimeField()
-    content = models.CharField(max_length=1000)
     room = models.ForeignKey(Room, on_delete=models.PROTECT)
 
     def __str__(self):

@@ -29,10 +29,10 @@ Who is the SPY? - Home
             <h5 class="col-sm-12 d-flex"> Room ID: {{room.id}} </h5>
             <br><br>
             {% if room.ready == False%}
-            <h5 class="col-sm-12 d-flex" id="room_readiness_"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{room.ready }}</span>
+            <h5 class="col-sm-12 d-flex" id="room_readiness_"> Ready:&nbsp; &nbsp;<span class=" text-danger">{{ room.ready }}</span>
             </h5>
             {% else %}
-            <h5 class="col-sm-12 d-flex" id="room_readiness"> Ready: &nbsp; &nbsp;<span class=" text-success">{{room.ready }}</span>
+            <h5 class="col-sm-12 d-flex" id="room_readiness"> Ready: &nbsp; &nbsp;<span class=" text-success">{{ room.ready }}</span>
             </h5>
             {% endif %}
             <br><br>
@@ -90,8 +90,28 @@ Who is the SPY? - Home
             <h2>CHATS</h2>
 
             <div class="col-sm-10 mx-auto" id="msg">
+
+                <!-- voting -->
+                <div id="vote" class="media p-5 mx-auto align-center" style="display:none">
+                    <div class="col-sm-6">
+                        <h5>The player that you think is the spy:</h5>
+                    </div><br><br>
+                    <form class="col-sm-4 max-auto">
+                        {% for player in players %}
+                            {% if player.is_dead == False %}
+                                <p class="max-auto">{{ player.player.first_name }} {{ player.player.last_name }}:
+                                    <input type="radio" name="vote" value="{{ player.id }}" onclick="getVote(this.value)">
+                                </p>
+                            {% endif %}
+                        {% endfor %}
+                    </form>
+                </div>
+
+                <!-- display messages -->
                 <div class="col-sm-10" id="testing"></div>
-                <div class="media border p-3">
+
+                <!-- sending messages -->
+                <div class="media border p-3" id="my_profile">
                     {% if profile.picture %}
                     <img class="mr-3 mt-3 rounded-circle" src="{% url 'photo' profile.id %}" style="width:60px;"
                          width="200px">
@@ -108,21 +128,36 @@ Who is the SPY? - Home
                     </div>
                 </div>
             </div>
+            <div class="col-sm-6 mx-auto">
+                <h5 id="message" class="text-danger max-auto"></h5>
+            </div>
+
         </div>
     </div>
 
     <script>
         var myUserName = "{{ request.user.username }}"
-        var room_id = {{room.id}};
+        var room_id = {{ room.id }};
         console.log("username: " + myUserName);
 
+        console.log("room id: " + room_id);
         var room_ready = "{{ room.ready }}";
-        if (room_ready != "True") {
-            window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
+
+        if (room_ready) {
+            window.setInterval(function () {
+                getMessage();
+            }, 5000);
+
+            window.setInterval(function () {
+                updateGame()
+                displayPlayer(room_id);
+            }, 1000);
+
+            // window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
+            // startTiming(); // put here for debug
         } else {
-            window.setInterval("displayPlayer(room_id)", 1000);
-            window.setInterval("updateGame()", 1000);
-            window.setInterval(getMessage, 5000);
+            window.setInterval("displayPlayer(room_id)", 5000);
+            // window.setInterval("gameOn(room_id)", 5000); // auto update
         }
 
         // window.onload = "displayPlayer(room_id)";

@@ -85,6 +85,8 @@ function displayGame(response) {
             }
         }else{
             //vote time
+            $('#vote').show()
+            $('#my_profile').hide()
         }
     })
 }
@@ -131,7 +133,6 @@ function displayName(response) {
             if (this.room_ready == false && this.username == myUserName) {
                 $("#your_word").html('<span class = "text-capitalize"> Your Word: None' + '</span>');
                 $('#send_msg_button').prop('disabled', true);
-
             }
     })
 }
@@ -211,13 +212,48 @@ function updateMsg(response) {
     })
 }
 
-function startTiming(response) {
-    var sec = 30
-    var timer = setInterval(function() {
-       $('#time span').text(sec--);
-        if (sec < 0) {
-          $('#time').fadeOut('fast');
-          clearInterval(timer);
-       }
-    }, 1000);
+// function startTiming(response) {
+//     var sec = 30
+//     var timer = setInterval(function() {
+//        $('#time span').text(sec--);
+//         if (sec < 0) {
+//           $('#time').fadeOut('fast');
+//           clearInterval(timer);
+//        }
+//     }, 1000);
+// }
+
+function getVote(player_id) {
+    console.log("voting...")
+    $.ajax({
+        url: "/findspy/get-vote",
+        type: "POST",
+        data: "vote=" + player_id + "&csrfmiddlewaretoken="
+        + getCSRFToken(),
+        dataType: "json",
+        success: displayVote,
+        error: updateError,
+    });
+}
+
+function displayVote(response) {
+    console.log("Voting Result:");
+    console.log("room id: " + response[0].room_id);
+    console.log("msg: " + response[0].msg);
+    console.log("winner: " + response[0].winner);
+    console.log(response[0].game_end);
+
+    $('#message').html("");
+
+    if (response[0].game_end) {
+        $('#message').html(
+        response[0].msg + '<br><br>' + '<b>Game End!</b><br><br>'
+        );
+        $('#msg').hide();
+    } else {
+        $('#message').html(
+        response[0].msg + '<br><br>' + 'User alived: ' + response[0].players_alive + '<br><br>'
+        );
+    }
+    $('#vote').hide();
 }
