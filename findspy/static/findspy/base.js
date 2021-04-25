@@ -69,27 +69,31 @@ function updateGame(response) {
 
 function displayGame(response) {
     $(response).each(function () {
-        if (this.room_chat_time == true){
+        if(this.room_ready == true) {
+            if (this.room_chat_time == true){
             //console.log(this.player_turn_username)
             //console.log(this.room_timeEnd)
             //console.log(this.current_time)
             //console.log(myUserName)
-            if (this.player_turn_username == myUserName){
-                $('#send_msg_button').prop('disabled', false);  
+                if (this.player_turn_username == myUserName){
+                    $('#send_msg_button').prop('disabled', false);
+                    $("#game-messages").html(
+                    '<h5 id="game-messages">Seconds left: ' + this.time_left +'</h5>');
+                }else{
+                    $('#send_msg_button').prop('disabled', true);
+                    $("#game-messages").html(
+                    '<h5 id="game-messages">' + this.player_turn_first_name +
+                    '&nbsp'+ this.player_turn_last_name + ' is typing... </h5>');
+                }
+            } else {
+            //vote time
                 $("#game-messages").html(
-                '<h5 id="game-messages">Seconds left: ' + this.time_left +'</h5>');   
-            }else{
-                $('#send_msg_button').prop('disabled', true);
-                $("#game-messages").html(
-                '<h5 id="game-messages">' + this.player_turn_first_name +
-                '&nbsp'+ this.player_turn_last_name + ' is typing... </h5>');  
+                    '<h5 id="game-messages">Voting...</h5>');
+                $('#vote').show()
+                $('#my_profile').hide()
             }
         }else{
-            //vote time
-            $("#game-messages").html(
-                '<h5 id="game-messages">Voting...</h5>');
-            $('#vote').show()
-            $('#my_profile').hide()
+            // do nothing
         }
     })
 }
@@ -264,7 +268,7 @@ function displayVote(response) {
         if (this.game_end == true && this.username== myUserName) {
             $('#msg').show();
             if (this.winner == 'civilian'){
-                console.log(222222222)
+                //console.log(222222222)
                 if (this.player_identity == 'civilian'){
                     $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
                     + '<h5 class=" text-success">' + "Congratulation!! You Wins &#128522;" 
@@ -278,7 +282,7 @@ function displayVote(response) {
                     + '; The civilian word is ' + this.civilian_word);
                 }
             }else{
-                console.log(333333)
+                //console.log(333333)
                 if (this.player_identity == 'spy'){
                     $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
                     + '<h5 class=" text-success">' + "Congratulation!! You Wins &#128522;" 
