@@ -6,10 +6,12 @@ from django.conf.urls import url
 urlpatterns = [
     path('', views.home, name='home'),
     path('create_room', views.create_room, name='create_room'),
-    path('get-player/<int:room_id>', views.get_player, name='get-player'),
+    path('get-player', views.get_player, name='get-player'),
     path('update_game', views.update_game, name='update_game'),
     path('send-msg', views.send_msg, name='send-msg'),
     path('get-msg', views.get_msg, name='get-msg'),
+    path('get-vote', views.get_vote, name='get-vote'),
+    path('process_vote', views.process_vote, name='process_vote'),
     path('join_room', views.join_room, name='join_room'),
     path('exit_room', views.exit_room, name='exit_room'),
     path('invite_friend', views.invite_friend, name='invite_friend'),

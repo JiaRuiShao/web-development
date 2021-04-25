@@ -4,7 +4,7 @@ function changeProfile() {
 
 // doesn't work b/c onload does not apply to div tag, has to be applied to body tag
 function userVisitCount() {
-    console.log(Storage, localStorage.visitCount)
+    //console.log(Storage, localStorage.visitCount)
     if (typeof (Storage) !== "undefined") {
         if (localStorage.visitCount === "undefined" || localStorage.visitCount === "NaN") {
             localStorage.visitCount = 0;
@@ -12,7 +12,7 @@ function userVisitCount() {
         if (localStorage.visitCount <= 3) {
             displayRule()
         }
-        console.log('current visit count: ', localStorage.visitCount)
+        //console.log('current visit count: ', localStorage.visitCount)
         localStorage.visitCount++;
     } else {
         displayRule()
@@ -50,7 +50,7 @@ function exitRoom() {
 
 function displayPlayer(room_id) {
     $.ajax({
-        url: "/findspy/get-player/" + room_id,
+        url: "/findspy/get-player",
         dataType: "json",
         success: validatePlayer,
         error: updateError,
@@ -69,10 +69,10 @@ function updateGame(response) {
 function displayGame(response) {
     $(response).each(function () {
         if (this.room_chat_time == true){
-            console.log(this.player_turn_username)
-            console.log(this.room_timeEnd)
-            console.log(this.current_time)
-            console.log(myUserName)
+            //console.log(this.player_turn_username)
+            //console.log(this.room_timeEnd)
+            //console.log(this.current_time)
+            //console.log(myUserName)
             if (this.player_turn_username == myUserName){
                 $('#send_msg_button').prop('disabled', false);  
                 $("#game-messages").html(
@@ -85,6 +85,10 @@ function displayGame(response) {
             }
         }else{
             //vote time
+            $("#game-messages").html(
+                '<h5 id="game-messages">Voting...</h5>');
+            $('#vote').show()
+            $('#my_profile').hide()
         }
     })
 }
@@ -131,7 +135,6 @@ function displayName(response) {
             if (this.room_ready == false && this.username == myUserName) {
                 $("#your_word").html('<span class = "text-capitalize"> Your Word: None' + '</span>');
                 $('#send_msg_button').prop('disabled', true);
-
             }
     })
 }
@@ -211,13 +214,79 @@ function updateMsg(response) {
     })
 }
 
-function startTiming(response) {
-    var sec = 30
-    var timer = setInterval(function() {
-       $('#time span').text(sec--);
-        if (sec < 0) {
-          $('#time').fadeOut('fast');
-          clearInterval(timer);
-       }
-    }, 1000);
+// function startTiming(response) {
+//     var sec = 30
+//     var timer = setInterval(function() {
+//        $('#time span').text(sec--);
+//         if (sec < 0) {
+//           $('#time').fadeOut('fast');
+//           clearInterval(timer);
+//        }
+//     }, 1000);
+// }
+
+function getVote(player_id) {
+    console.log("voting...")
+    $.ajax({
+        url: "/findspy/get-vote",
+        type: "POST",
+        data: "vote=" + player_id + "&csrfmiddlewaretoken="
+        + getCSRFToken(),
+        dataType: "json",
+        success: displayVote,
+        error: updateError,
+    });
+}
+
+function displayVote(response) {
+    //console.log("Voting Result:");
+    //console.log("room id: " + response[0].room_id);
+    //console.log("msg: " + response[0].msg);
+    //console.log("winner: " + response[0].winner);
+    // console.log(response[0].game_end);
+    $('#message').html("");
+    console.log(1111111)
+
+    $(response).each(function () {
+        if (this.game_end == true && this.username== myUserName) {
+            $('#msg').hide();
+            if (this.winner == 'civilian'){
+                console.log(222222222)
+                if (this.player_identity == 'civilian'){
+                    
+                    $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
+                    + '<h5 class=" text-success">' + "Congratulation!! You Wins &#128522;" 
+                    + '</h5><br><br>' 
+                    + 'The spy word is ' + this.spy 
+                    + '; The civilian word is ' + this.civilian_word);
+                }else{
+                    $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
+                    + '<h5 class=" text-primary">' + "You Lose &#128557;" + '</h5><br><br>' 
+                    + 'The spy word is ' + this.spy 
+                    + '; The civilian word is ' + this.civilian_word);
+                }
+            }else{
+                console.log(333333)
+                if (this.player_identity == 'spy'){
+                    $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
+                    + '<h5 class=" text-success">' + "Congratulation!! You Wins &#128522;" 
+                    + '</h5><br><br>' 
+                    + 'The spy word is ' + this.spy 
+                    + '; The civilian word is ' + this.civilian_word);
+                }else{
+                    $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
+                    + '<h5 class=" text-primary">' + "You Lose &#128557;" + '</h5><br><br>' 
+                    + 'The spy word is ' + this.spy 
+                    + '; The civilian word is ' + this.civilian_word);
+                }
+            }
+        }else{
+            console.log(44444)
+            $('#message').html(
+            this.msg + '<br><br>' + 'User alived: ' + this.players_alive + '<br><br>'
+            );
+        }
+        $('#vote').hide();
+    })
+
 }
