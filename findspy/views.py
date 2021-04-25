@@ -86,11 +86,18 @@ def exit_room(request):
     room.ready = False
     room.playerTurn = 0
     room.save()
+
     player.room = None
-    player.game_id = 0
-    player.word = None
-    player.identity = None
     player.save()
+
+    for p in room.player.all():
+        p.game_id = 0
+        p.word = None
+        p.identity = None
+        p.is_dead = False
+        p.vote = None
+        p.is_dead = False
+        p.save()
 
     for msg in Message.objects.filter(player_id=request.user.id):
         msg.delete()
@@ -183,45 +190,69 @@ def assign_player_id_words(request, room):
 @login_required
 def update_game(request):
     # start the game
-    context = {}
     # get the player info
     response_data = []
     player = Player.objects.get(player=request.user)
     room = player.room
-    
     player_turn_id = room.playerTurn
-    player_turn = Player.objects.get(game_id=player_turn_id, room_id=room.id)
+    print("game end: " + str(room.game_end == True))
 
-    time_left = room.timeEnd - timezone.now()
-    seconds_left = time_left.total_seconds()
+    if not room.ready:
+        print(11111111111)
+        response_json = json.dumps(response_data)
+        for player in room.player.all():
+            players ={'room_ready': room.ready,
+                      'username': player.player.username,
+                      }
+        response_data.append(players)
+        #print(player_turn_id)
+        return HttpResponse(response_json, content_type='application/json')
+    elif room.game_end == True:
+        print(222222222222222222)
+        response_json = json.dumps(response_data)
+        for player in room.player.all():
+            players = {'room_ready': room.ready,
+                       'username': player.player.username,
+                       }
+        response_data.append(players)
+        # print(player_turn_id)
+        return HttpResponse(response_json, content_type='application/json')
+    else:
+        player_turn = Player.objects.get(game_id=player_turn_id, room_id=room.id)
 
-    if room.chat_time:
-        if player_turn.is_dead:
-            if room.playerTurn == (room.player.count() - 1):
-                room.chat_time = False
-                # voting (set timeEnd, set playerTurn to 0)
-                room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
-                room.playerTurn = 0
-                room.save()
+        time_left = room.timeEnd - timezone.now()
+        seconds_left = time_left.total_seconds()
+        #print(room.timeEnd)
+
+        if room.chat_time:
+            if player_turn.is_dead:
+                if room.playerTurn == (room.player.count() - 1):
+                    # voting (set timeEnd, set playerTurn to 0)
+                    room.chat_time = False
+                    # room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
+                    room.playerTurn = 0
+                    room.save()
+                    #print('player dead, and last player: ' + str(room.timeEnd))
 
             else:
                 room.playerTurn += player_turn_id
                 room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                 room.save()
 
-        else:
-            if room.timeEnd <= timezone.now():
-                if room.playerTurn == (room.player.count() - 1):
-                    room.chat_time = False
-                    # voting
-                    # room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
-                    room.playerTurn = 0
-                    room.save()
-
-                else:
-                    room.playerTurn += 1
-                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
-                    room.save()
+            else:
+                if room.timeEnd <= timezone.now():
+                    if room.playerTurn == (room.player.count() - 1):
+                        # voting
+                        room.chat_time = False
+                        # room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
+                        room.playerTurn = 0
+                        room.save()
+                        #print('not dead player, last player: ' + str(room.timeEnd))
+                    else:
+                        room.playerTurn += 1
+                        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+                        room.save()
+                        #print('not dead player, not last player: ' + str(room.timeEnd))
 
     for player in room.player.all():
         players = {
@@ -269,7 +300,7 @@ def join_room(request):
 
     if player not in room.player.all():
         if room.capacity == 3 or room.capacity == 5:
-            if player.room == None:
+            if player.room is None:
                 if room.capacity > room.player.count():
                     room.player.add(player)
                     # player.room = room
@@ -338,12 +369,8 @@ def invite_friend(request):
 
     if invited_player not in room.player.all():
         if room.capacity == 3 or room.capacity == 5:
-            if invited_player.room == None:
+            if invited_player.room is None:
                 if room.capacity > room.player.count():
-                    room.ready = True
-                    room.playerTurn = 0
-                    room.chat_time = True
-                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.player.add(invited_player)
                     room.save()
                     invited_player.save()
@@ -355,6 +382,10 @@ def invite_friend(request):
                     # player.room = room
                     if room.capacity == room.player.count():
                         room.ready = True
+                        room.playerTurn = 0
+                        room.chat_time = True
+                        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+                        room.game_end = False
                         room.save()
                         assign_player_id_words(request,
                                                room)  # assign words and play id for each user in the room
@@ -413,7 +444,7 @@ def send_msg(request):
 
     if room.playerTurn == (room.player.count() - 1):
         room.chat_time = False
-        ### Vote Function (set timeEnd, set playerTurn to 0)
+        # voting (set timeEnd, set playerTurn to 0)
         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
         room.playerTurn = 0
         room.save()
@@ -479,12 +510,10 @@ def get_vote(request):
     player.vote = int(request.POST['vote'])
     player.save()
 
-    # wait for 15 sec for the others to vote
-    time_lapse = 15
-    room.voteTime = timezone.now() + datetime.timedelta(seconds=time_lapse)
+    # wait for 10 sec for the others to vote
+    room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
     room.save()
-    time.sleep(time_lapse)
-    print('runningx3')
+    time.sleep(10)
 
     return process_vote(request)
 
@@ -498,7 +527,7 @@ def process_vote(request):
     response_json = None
     print('running')
 
-    if timezone.now() >= room.voteTime:
+    if timezone.now() >= room.timeEnd:
         print('runningx2')
         # eliminate the user with the most votes
         vote = []
@@ -532,6 +561,7 @@ def process_vote(request):
         players = room.player.all()
         for p in players:
             name = str(p.player.first_name) + str(p.player.last_name)
+            print(p.__dict__)
             if (p.identity == 'spy') and (not p.is_dead):
                 players_alive.append(name)
                 spy_left += 1
@@ -541,7 +571,7 @@ def process_vote(request):
                 players_alive.append(name)
                 mr_white_left += 1
                 # mr_white.append(p)
-            if (p.identity == 'civilian') and (not p.is_dead):
+            if (p.identity == 'civilian') and (p.is_dead == False):
                 players_alive.append(name)
                 civilian_left += 1
                 civilian_word = p.word
@@ -561,7 +591,7 @@ def process_vote(request):
             room.save()
 
         print(room.game_end)
-        print('winner' + room.winner)
+        print('winner' + str(room.winner))
 
         # if the game end, reset player info
         response_data = []
@@ -580,18 +610,28 @@ def process_vote(request):
             }
             response_data.append(myroom)
         response_json = json.dumps(response_data)
+
+        # back to chat time
         room.chat_time = True
         room.save()
 
         if room.game_end:
             print('game end')
             for p in players:
-                #p.game_id = None
-                #p.word = None
+                p.game_id = None
+                p.word = None
                 p.identity = None
                 p.is_dead = False
                 p.vote = None
                 p.save()
+
+            # clear message in room after game end
+            for msg in room.message_set.all():
+                msg.content = None
+                msg.timestamp = None
+                msg.room = None
+                msg.player = None
+                msg.save()
 
     return HttpResponse(response_json, content_type='application/json')
 
@@ -659,7 +699,7 @@ def get_player(request):  # stop calling when room.ready == True! (We'll call ge
     # get the player info
     response_data = []
     player = Player.objects.get(player=request.user)
-    room =player.room
+    room = player.room
 
     for player in room.player.all():
         players = {
@@ -671,6 +711,8 @@ def get_player(request):  # stop calling when room.ready == True! (We'll call ge
             'room_ready': player.room.ready,
             'room_id': player.room.id,
             'username': player.player.username,
+            'is_dead': player.is_dead,
+            'chat_time': room.chat_time,
         }
         response_data.append(players)
     response_json = json.dumps(response_data)

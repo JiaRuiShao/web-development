@@ -48,7 +48,7 @@ function exitRoom() {
     alert("Are you sure that you want to exit the room?")
 }
 
-function displayPlayer(room_id) {
+function displayPlayer() {
     $.ajax({
         url: "/findspy/get-player",
         dataType: "json",
@@ -56,6 +56,7 @@ function displayPlayer(room_id) {
         error: updateError,
     });
 }
+
 
 function updateGame(response) {
     $.ajax({
@@ -109,6 +110,17 @@ function displayName(response) {
     $("#your_word").empty();
 
     $(response).each(function () {
+        // console.log(this.fname, this.lname, this.is_dead == false)
+        // console.log("Chat time == False", this.chat_time == false)
+        // console.log("get elm by id: ", document.getElementById("vote_"+this.id) == null)
+        if (this.chat_time == false && this.is_dead == false && document.getElementById("vote_"+this.id) == null) {
+            console.log("Inner Loop")
+            $("#display_vote").append(
+                '<p class="max-auto" id="vote_' + this.id + '">' + this.fname + ' ' + this.lname + ': ' +
+                '<input type="radio" name="vote" value="' + this.id + '" onClick="getVote(' + this.id + ')"></p>'
+            )
+        }
+
         if (document.getElementById(this.id) == null) {
             if (this.room_ready == true){
                 $("#room_readiness").html(
@@ -245,15 +257,15 @@ function displayVote(response) {
     //console.log("winner: " + response[0].winner);
     // console.log(response[0].game_end);
     $('#message').html("");
-    console.log(1111111)
+    console.log(1111111);
 
     $(response).each(function () {
+        console.log("Game end: ", this.game_end === true)
         if (this.game_end == true && this.username== myUserName) {
-            $('#msg').hide();
+            $('#msg').show();
             if (this.winner == 'civilian'){
                 console.log(222222222)
                 if (this.player_identity == 'civilian'){
-                    
                     $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>' 
                     + '<h5 class=" text-success">' + "Congratulation!! You Wins &#128522;" 
                     + '</h5><br><br>' 
