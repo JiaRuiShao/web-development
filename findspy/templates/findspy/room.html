@@ -138,52 +138,18 @@ Who is the SPY? - Home
     <script>
         var myUserName = "{{ request.user.username }}"
         var room_id = {{ room.id }};
-        console.log("username: " + myUserName);
-        console.log("room id: " + room_id);
-
         var room_ready = "{{ room.ready }}";
         var room_chat = "{{ room.chat_time }}";
 
         window.setInterval(function () {
             displayPlayer();
             getMessage();
+            displayResult();
         }, 5000);
 
         window.setInterval(function () {
             updateGame()
         }, 1000);
-
-        /*window.setInterval(function () {
-            getMessage();
-            displayPlayer(); // call at least once
-        }, 5000);*/
-
-        /*if (room_ready === "True") {
-            console.log("Room ready!")
-            window.setInterval(function () {
-                getMessage();
-                displayPlayer(); // call at least once
-            }, 5000);
-            // window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
-            // startTiming(); // put here for debug
-        } else {
-            window.setInterval("displayPlayer()", 1000);
-            // window.setInterval("gameOn(room_id)", 5000); // auto update
-        }*/
-
-        // window.onload = "displayPlayer(room_id)";
-        /*setInterval(function () {
-          displayPlayer(room_id)
-       }, 5000)*/
-
-        /*setInterval(function () {
-          var room_ready = "{{ room.ready }}";
-          var ready = room_ready == "True";
-          console.log("room ready: " + ready);
-          if (ready) {
-              "setup(room_id)";
-          }
-       }, 5000)*/
 
     </script>
 

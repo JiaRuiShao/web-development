@@ -12,6 +12,7 @@ urlpatterns = [
     path('get-msg', views.get_msg, name='get-msg'),
     path('get-vote', views.get_vote, name='get-vote'),
     path('process_vote', views.process_vote, name='process_vote'),
+    path('dump_result', views.dump_result, name='dump_result'),
     path('join_room', views.join_room, name='join_room'),
     path('exit_room', views.exit_room, name='exit_room'),
     path('invite_friend', views.invite_friend, name='invite_friend'),

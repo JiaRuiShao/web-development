@@ -96,7 +96,7 @@ function displayGame(response) {
                         $("#game-messages").html(
                             '<h5 id="game-messages">' + this.player_turn_first_name +
                             '&nbsp' + this.player_turn_last_name + ' is typing... </h5>');
-                        console.log('chating...this player is dead')
+                        // console.log('chating...this player is dead')
                         $('#my_profile').show();
                     }
                 }
@@ -109,13 +109,13 @@ function displayGame(response) {
                         '<h5 id="game-messages">Voting...</h5>');
                     $('#vote').show()
                     $('#my_profile').hide()
-                    console.log('voting...this player is alive')
+                    // console.log('voting...this player is alive')
                 } else if (this.current_user_name == myUserName && this.is_dead == true) {
                     $("#game-messages").html(
                         '<h5 id="game-messages">You are dead! The others are voting...</h5>');
                     $('#vote').hide()
                     $('#my_profile').hide()
-                    console.log('voting...this player is dead')
+                    // console.log('voting...this player is dead')
                 }
             }
             // display time
@@ -123,7 +123,7 @@ function displayGame(response) {
                 $("#game-messages").html('<h5 id="game-messages">Display Voting Result...</h5>');
                 $('#vote').hide()
                 $('#my_profile').hide()
-                console.log('displaying...')
+                // console.log('displaying...')
             }
         }
         // when game end or game not start
@@ -151,7 +151,7 @@ function displayGameInfo(response) {
 
     $(response).each(function () {
         if (this.phase == 'vote' && this.is_dead == false && document.getElementById("vote_" + this.id) == null) {
-            console.log("Inner Loop")
+            // console.log("Inner Loop")
             $("#display_vote").append(
                 '<p class="max-auto" id="vote_' + this.id + '">' + this.fname + ' ' + this.lname + ': ' +
                 '<input type="radio" name="vote" value="' + this.id + '" onClick="getVote(' + this.id + ')"></p>'
@@ -294,7 +294,6 @@ function displayVote(response) {
             if (this.game_end == true) {
                 $("#game-messages").html('<h5 id="game-messages">Game End</h5>');
                 if (this.winner == 'civilian') {
-                    console.log('civilian win')
                     if (this.player_identity == 'civilian') {
                         $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>'
                             + '<h5 class=" text-success">' + "You are a " + this.player_identity
@@ -302,18 +301,14 @@ function displayVote(response) {
                             + '</h5><br>'
                             + 'The spy word is ' + this.spy_word
                             + '; The civilian word is ' + this.civilian_word);
-                        console.log('I am a civilian');
                     } else {
                         $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>'
                             + '<h5 class=" text-primary">' + "You are a " + this.player_identity
-                            + this.player_identity
                             + ". Sorry, you Lose &#128557;" + '</h5><br>'
                             + 'The spy word is ' + this.spy_word
                             + '; The civilian word is ' + this.civilian_word);
-                        console.log('I am a spy');
                     }
                 } else {
-                    console.log('spy win')
                     if (this.player_identity != 'civilian') {
                         $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>'
                             + '<h5 class=" text-success">' + ' You are a '
@@ -321,7 +316,6 @@ function displayVote(response) {
                             + '</h5><br>'
                             + 'The spy word is ' + this.spy_word
                             + '; The civilian word is ' + this.civilian_word);
-                        console.log('I am a spy or white board');
                     } else {
                         console.log(555555)
                         $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>'
@@ -329,17 +323,29 @@ function displayVote(response) {
                             + this.player_identity + '. You Lose &#128557;</h5><br>'
                             + 'The spy word is ' + this.spy_word
                             + '; The civilian word is ' + this.civilian_word);
-                        console.log('I am a civilian');
                     }
                 }
             } else {
-                // console.log("you are not this request.user")
-                // $('#message').html(
-                // this.msg + '<br><br>' + 'User alived: ' + this.players_alive + '<br><br>'
-                // );
                 $('#message').html(this.msg + '<br><br>');
             }
         }
     })
-
 }
+
+function displayResult() {
+    $.ajax({
+        url: "/findspy/dump_result",
+        dataType: "json",
+        success: updateResult,
+        error: updateError,
+    });
+}
+
+function updateResult(response) {
+    $(response).each(function () {
+       if (this.is_dead == true && this.username == myUserName) {
+           displayVote(response);
+       }
+    });
+}
+

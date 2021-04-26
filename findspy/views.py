@@ -704,6 +704,7 @@ def dump_stats(request):
             'players_alive': players_alive,
             'username': player.player.username,
             'player_identity': player.identity,
+            'is_dead': player.is_dead,
         }
         response_data.append(myroom)
     response_json = json.dumps(response_data)
@@ -712,6 +713,69 @@ def dump_stats(request):
     # time.sleep(10)
     room.phase = 'display'
     room.save()
+
+    return HttpResponse(response_json, content_type='application/json')
+
+
+@login_required
+@ensure_csrf_cookie
+def dump_result(request):
+
+    player = Player.objects.get(player=request.user)
+    room = player.room
+    players = room.player.all()
+    response_json = []
+
+    # check how many spy/civilian survive and update the room info
+    civilian_left = 0
+    mr_white_left = 0
+    spy_left = 0
+    # civilian = []
+    # mr_white = []
+    # spy = []
+    spy_word = None
+    civilian_word = None
+    players_alive = []
+
+    players = room.player.all()
+    for p in players:
+        name = str(p.player.first_name) + str(p.player.last_name)
+        print(p.__dict__)
+        if p.identity == 'spy':
+            spy_word = p.word
+            if not p.is_dead:
+                players_alive.append(name)
+                spy_left += 1
+
+        if p.identity == 'civilian':
+            civilian_word = p.word
+            if not p.is_dead:
+                players_alive.append(name)
+                civilian_left += 1
+
+        if (p.identity == 'Mr.White') and (not p.is_dead):
+            players_alive.append(name)
+            mr_white_left += 1
+
+    # if the game end, reset player info
+    response_data = []
+
+    for player in players:
+        myroom = {
+            'room_id': room.id,
+            'spy_word': spy_word,
+            'civilian_word': civilian_word,
+            # 'room_phase': room.phase,
+            'game_end': room.game_end,
+            'winner': room.winner,
+            'msg': room.msg,
+            'players_alive': players_alive,
+            'username': player.player.username,
+            'player_identity': player.identity,
+            'is_dead': player.is_dead,
+        }
+        response_data.append(myroom)
+    response_json = json.dumps(response_data)
 
     return HttpResponse(response_json, content_type='application/json')
 
