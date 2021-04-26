@@ -79,23 +79,25 @@ function displayGame(response) {
                 console.log('this.player_turn_username: ' + this.player_turn_username)
                 $('#chat_block').show();
                 $('#vote').hide()
-                $('#my_profile').show()
 
                 if (this.current_user_name == myUserName) {
                     if (this.player_turn_username == myUserName && this.is_dead == false) {
                         $('#send_msg_button').prop('disabled', false);
                         $("#game-messages").html(
                             '<h5 id="game-messages">Seconds left: ' + this.time_left + '</h5>');
+                        $('#my_profile').show()
                     } else if (this.is_dead == true) {
                         $("#game-messages").html('<h5 id="game-messages">You are dead! ' +
                             this.player_turn_first_name + '&nbsp'
                             + this.player_turn_last_name + ' is typing... </h5>');
+                        $('#my_profile').hide();
                     } else {
                         $('#send_msg_button').prop('disabled', true);
                         $("#game-messages").html(
                             '<h5 id="game-messages">' + this.player_turn_first_name +
                             '&nbsp' + this.player_turn_last_name + ' is typing... </h5>');
                         console.log('chating...this player is dead')
+                        $('#my_profile').show();
                     }
                 }
             }
@@ -130,6 +132,7 @@ function displayGame(response) {
         }
     })
 }
+
 
 function validatePlayer(response) {
     if (Array.isArray(response)) {
@@ -248,10 +251,9 @@ function validateMsg(response) {
 function updateMsg(response) {
     $(response).each(function () {
         if (document.getElementById("msg_" + this.id) == null) {
-            $("#testing").append(
-                '<p id="msg_' + this.id + '">' + ' ID: ' + this.id + ' Content: ' + this.content
-                + ' GameID: ' + this.gameID + ' Name: ' +
-                this.fname + this.lname + ' Time: ' + this.timestamp + '</p><br>'
+            $("#display_msg").append(
+                '<p id="msg_' + this.id + '">' +' Name: ' + this.fname + ' ' + this.lname + ' Time: '
+                + this.timestamp + '<br><span class = "text-primary">' + this.content + '</span> ' + '</p><br>'
             )
         }
     })

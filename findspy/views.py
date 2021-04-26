@@ -550,7 +550,7 @@ def get_msg(request):
             'gameID': msg.player.game_id,
             'fname': msg.player.player.first_name,
             'lname': msg.player.player.last_name,
-            'timestamp': timezone.localtime(msg.timestamp).strftime('%m/%d/%Y %I:%M %p'),
+            'timestamp': timezone.localtime(msg.timestamp).strftime('%I:%M %p'),
         }
         response_data.append(msg)
 
@@ -625,7 +625,7 @@ def process_vote(request):
             room.save()
 
     else:
-        while timezone.now() <= room.voteTime:
+        while timezone.now() < room.voteTime:
             time.sleep(1)
 
     return dump_stats(request)

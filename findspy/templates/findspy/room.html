@@ -108,7 +108,7 @@ Who is the SPY? - Home
                 </div>
 
                 <!-- display messages -->
-                <div class="col-sm-10" id="testing"></div>
+                <div class="col-sm-10" id="display_msg"></div>
 
                 <!-- sending messages -->
                 <div class="media border p-3" id="my_profile">
@@ -160,12 +160,10 @@ Who is the SPY? - Home
 
         /*if (room_ready === "True") {
             console.log("Room ready!")
-
             window.setInterval(function () {
                 getMessage();
                 displayPlayer(); // call at least once
             }, 5000);
-
             // window.setInterval("displayPlayer(room_id)", 5000); // auto update players who joined the room
             // startTiming(); // put here for debug
         } else {
