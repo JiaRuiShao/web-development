@@ -303,6 +303,7 @@ def update_game(request):
                 'phase': room.phase,
                 'current_time': timezone.now().isoformat(),
                 'player_turn_username': player_turn.player.username,
+                'current_user_name': player.player.username,
                 'player_turn_first_name': player_turn.player.first_name,
                 'player_turn_last_name': player_turn.player.last_name,
                 'time_left': int(seconds_left),
@@ -624,7 +625,7 @@ def process_vote(request):
             room.save()
 
     else:
-        while timezone.now() < room.voteTime:
+        while timezone.now() <= room.voteTime:
             time.sleep(1)
 
     return dump_stats(request)
