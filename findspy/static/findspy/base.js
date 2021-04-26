@@ -69,12 +69,15 @@ function updateGame(response) {
 
 function displayGame(response) {
     $(response).each(function () {
-        if (this.room_ready == true) {
+        // when game start and not end
+        if (this.room_ready == true && this.game_end == false) {
+            $('#exit_room_button').prop('disabled', true);
+
+            // chat time
             if (this.phase == 'chat') {
-                //console.log(this.player_turn_username)
-                //console.log(this.room_timeEnd)
-                //console.log(this.current_time)
-                //console.log(myUserName)
+                console.log('chatting: ' + this.is_dead)
+                console.log('this.player_turn_username: ' + this.player_turn_username)
+                $('#chat_block').show();
                 $('#vote').hide()
                 $('#my_profile').show()
 
@@ -157,8 +160,6 @@ function displayGameInfo(response) {
                 $("#room_readiness").html(
                     '<span class = "text-capitalize"> Ready: &nbsp<span class=" text-success">' + this.room_ready +
                     '</span></span>');
-                $('#exit_room_button').prop('disabled', true);
-                $('#chat_block').show();
             }
             if (this.room_ready == false) {
                 $("#room_readiness").html(
