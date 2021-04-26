@@ -18,7 +18,7 @@ class Room(models.Model):
     ready = models.BooleanField(default=False)
     timeEnd = models.DateTimeField(null=True, blank=True, default=None)
     playerTurn = models.IntegerField(null=True, blank=True, default=None)
-    chat_time = models.BooleanField(null=True, blank=True, default=None)
+    phase = models.CharField(max_length=100, null=None, blank=None, default='')
     game_end = models.BooleanField(null=True, blank=True, default=False)
     winner = models.CharField(max_length=200, null=True, blank=True, default=None)
     msg = models.CharField(max_length=200, null=True, blank=True, default=None)

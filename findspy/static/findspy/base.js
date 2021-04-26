@@ -85,19 +85,26 @@ function displayGame(response) {
                     '<h5 id="game-messages">' + this.player_turn_first_name +
                     '&nbsp'+ this.player_turn_last_name + ' is typing... </h5>');
                 }
-            } else {
-            //vote time
+            } else if (this.phase == 'vote' && this.is_dead == false) {
+                //vote time
                 $("#game-messages").html(
                     '<h5 id="game-messages">Voting...</h5>');
                 $('#vote').show()
                 $('#my_profile').hide()
+            } else if (this.phase == 'display') {
+                $("#game-messages").html(
+                    '<h5 id="game-messages">Display Voting Result...</h5>');
+                $('#vote').hide()
+                $('#my_profile').hide()
+            } else if (this.game_end == true ) {
+                console.log(1111111);
+                $('#exit_room_button').attr('disabled', false);
             }
         }else{
             // do nothing
         }
     })
 }
-
 
 function validatePlayer(response) {
     if (Array.isArray(response)) {
@@ -117,7 +124,7 @@ function displayName(response) {
         // console.log(this.fname, this.lname, this.is_dead == false)
         // console.log("Chat time == False", this.chat_time == false)
         // console.log("get elm by id: ", document.getElementById("vote_"+this.id) == null)
-        if (this.chat_time == false && this.is_dead == false && document.getElementById("vote_"+this.id) == null) {
+        if (this.phase == 'vote' && this.is_dead == false && document.getElementById("vote_" + this.id) == null) {
             console.log("Inner Loop")
             $("#display_vote").append(
                 '<p class="max-auto" id="vote_' + this.id + '">' + this.fname + ' ' + this.lname + ': ' +

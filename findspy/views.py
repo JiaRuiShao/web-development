@@ -48,7 +48,7 @@ def create_room(request):
     friends = current_profile.following.all()
 
     if player.room == None:
-        room = Room.objects.create(capacity=new_room_capacity, ready=False)
+        room = Room.objects.create(capacity=new_room_capacity, ready=False, phase='')
         room.player.add(player)
         room.save()
         # player.room = room # add the room creator into the room
@@ -88,19 +88,18 @@ def exit_room(request):
     room.game_end = True
     room.winner = None
     room.msg = None
-    room.chat_time = None
+    room.phase = ''
     room.save()
 
     player.room = None
     player.save()
 
     for p in room.player.all():
-        p.game_id = 0
+        p.game_id = None
         p.word = None
         p.identity = None
         p.is_dead = False
         p.vote = None
-        p.is_dead = False
         p.save()
 
     for msg in Message.objects.filter(room_id=room.id):
@@ -199,14 +198,16 @@ def update_game(request):
     player = Player.objects.get(player=request.user)
     room = player.room
     player_turn_id = room.playerTurn
-    print("game end: " + str(room.game_end == True))
+    # print("game end: " + str(room.game_end == True))
 
+    # if room not ready
     if not room.ready:
         print(11111111111)
         response_json = json.dumps(response_data)
         for player in room.player.all():
             players ={'room_ready': room.ready,
                       'username': player.player.username,
+                      'game_end': room.game_end,
                       }
         response_data.append(players)
         #print(player_turn_id)
@@ -228,18 +229,20 @@ def update_game(request):
         seconds_left = time_left.total_seconds()
         #print(room.timeEnd)
 
-        if room.chat_time:
+        # chatting time
+        if room.phase == 'chat':
+            # if next player is dead
             if player_turn.is_dead:
                 if room.playerTurn == (room.player.count() - 1):
                     # voting (set timeEnd, set playerTurn to 0)
-                    room.chat_time = False
-                    # room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
+                    room.phase = 'vote'
+                    room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.playerTurn = 0
                     room.save()
                     #print('player dead, and last player: ' + str(room.timeEnd))
 
                 else:
-                    room.playerTurn += player_turn_id
+                    room.playerTurn += 1
                     room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.save()
                     #print('player dead, and not last player: ' + str(room.timeEnd))
@@ -259,17 +262,25 @@ def update_game(request):
                         room.save()
                         #print('not dead player, not last player: ' + str(room.timeEnd))
 
+        if room.phase == 'display':
+            room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
+            room.playerTurn = 0
+            room.phase = 'chat'
+            room.save()
+
         for player in room.player.all():
             players = {
                 'username': player.player.username,
                 'room_timeEnd': room.timeEnd.isoformat(),
-                'room_chat_time': room.chat_time,
+                'phase': room.phase,
                 'current_time': timezone.now().isoformat(),
                 'player_turn_username': player_turn.player.username,
                 'player_turn_first_name': player_turn.player.first_name,
                 'player_turn_last_name': player_turn.player.last_name,
                 'time_left': int(seconds_left),
                 'room_ready': room.ready,
+                'game_end': room.game_end,
+                'is_dead': player.is_dead,
             }
             response_data.append(players)
         response_json = json.dumps(response_data)
@@ -313,11 +324,21 @@ def join_room(request):
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.playerTurn = 0
-                        room.chat_time = True
+                        room.phase = 'chat'
                         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                         room.game_end = False
+                        room.winner = None
+                        room.msg = None
                         room.save()
-                        #print('When first join the room, room.timeEnd: ' + str(room.timeEnd))
+
+                        for p in room.player.all():
+                            p.game_id = None
+                            p.word = None
+                            p.identity = None
+                            p.is_dead = False
+                            p.vote = None
+                            p.save()
+
                         # assign user id, word, identity for each user in the room
                         assign_player_id_words(request, room)
                     context['players'] = room.player.all()
@@ -391,10 +412,23 @@ def invite_friend(request):
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.playerTurn = 0
-                        room.chat_time = True
+                        room.phase = 'chat'
                         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                         room.game_end = False
+                        room.winner = None
+                        room.msg = None
                         room.save()
+
+                        # print('When first join the room, room.timeEnd: ' + str(room.timeEnd))
+
+                        for p in room.player.all():
+                            p.game_id = None
+                            p.word = None
+                            p.identity = None
+                            p.is_dead = False
+                            p.vote = None
+                            p.save()
+
                         #print('When first invite friends the room, room.timeEnd: ' + str(room.timeEnd))
                         assign_player_id_words(request,
                                                room)  # assign words and play id for each user in the room
@@ -452,7 +486,7 @@ def send_msg(request):
     player_turn_id = room.playerTurn
 
     if room.playerTurn == (room.player.count() - 1):
-        room.chat_time = False
+        room.phase = 'vote'
         # voting (set timeEnd, set playerTurn to 0)
         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
         room.playerTurn = 0
