@@ -3,6 +3,8 @@ import datetime
 import json
 import random
 from statistics import mode, StatisticsError
+
+from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -202,32 +204,59 @@ def update_game(request):
 
     # if room not ready
     if not room.ready:
-        print(11111111111)
-        response_json = json.dumps(response_data)
         for player in room.player.all():
             players ={'room_ready': room.ready,
                       'username': player.player.username,
                       'game_end': room.game_end,
                       }
         response_data.append(players)
+        response_json = json.dumps(response_data)
         #print(player_turn_id)
         return HttpResponse(response_json, content_type='application/json')
+
+    # if game end
     elif room.game_end == True:
-        print(222222222222222222)
-        response_json = json.dumps(response_data)
+        # # reset player info
+        # for p in room.player.all():
+        #     p.game_id = None
+        #     p.word = None
+        #     p.identity = None
+        #     p.is_dead = False
+        #     p.vote = None
+        #     p.save()
+        #
+        # # reset room info
+        # room.ready = False
+        # room.playerTurn = 0
+        # room.game_end = True
+        # room.winner = None
+        # room.msg = None
+        # room.phase = ''
+        # room.save()
+
+        # reset msg info
+        for msg in room.message_set.all():
+            msg.content = None
+            msg.timestamp = None
+            msg.room = None
+            msg.player = None
+            msg.save()
+
         for player in room.player.all():
             players = {'room_ready': room.ready,
                        'username': player.player.username,
+                       'game_end': room.game_end,
                        }
-        response_data.append(players)
+            response_data.append(players)
+        response_json = json.dumps(response_data)
         # print(player_turn_id)
         return HttpResponse(response_json, content_type='application/json')
+
+    # chatting, voting, and display
     else:
         player_turn = Player.objects.get(game_id=player_turn_id, room_id=room.id)
-
         time_left = room.timeEnd - timezone.now()
         seconds_left = time_left.total_seconds()
-        #print(room.timeEnd)
 
         # chatting time
         if room.phase == 'chat':
@@ -247,13 +276,12 @@ def update_game(request):
                     room.save()
                     #print('player dead, and not last player: ' + str(room.timeEnd))
 
+            # next player not dead
             else:
                 if room.timeEnd <= timezone.now():
                     if room.playerTurn == (room.player.count() - 1):
-                        # voting
-                        room.chat_time = False
-                        # room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
-                        room.playerTurn = 0
+                        # go voting
+                        room.phase = 'vote'
                         room.save()
                         #print('not dead player, last player: ' + str(room.timeEnd))
                     else:
@@ -283,6 +311,7 @@ def update_game(request):
                 'is_dead': player.is_dead,
             }
             response_data.append(players)
+
         response_json = json.dumps(response_data)
         return HttpResponse(response_json, content_type='application/json')
 
@@ -341,6 +370,7 @@ def join_room(request):
 
                         # assign user id, word, identity for each user in the room
                         assign_player_id_words(request, room)
+
                     context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
                 else:
@@ -543,6 +573,7 @@ def get_vote(request):
     eliminate_p = get_object_or_404(Player, id=int(request.POST['vote']))
     player = Player.objects.get(player=request.user)
     room = player.room
+    room_id = room.id
     players = room.player.all()
 
     if eliminate_p == 404 or eliminate_p not in players:
@@ -551,9 +582,14 @@ def get_vote(request):
     player.vote = int(request.POST['vote'])
     player.save()
 
-    # wait for 10 sec for the others to vote
-    room.timeEnd = timezone.now() + datetime.timedelta(seconds=10)
+    # wait for the others to vote
+    # while room.player.filter(vote=None).count() > 0:
+    #     time.sleep(1)
+
+    room = Room.objects.get(id=room_id)
+    room.voteTime = timezone.now() + datetime.timedelta(seconds=10)
     room.save()
+
     time.sleep(10)
 
     return process_vote(request)
@@ -565,10 +601,9 @@ def process_vote(request):
     player = Player.objects.get(player=request.user)
     room = player.room
     players = room.player.all()
-    response_json = None
     print('running')
 
-    if timezone.now() >= room.timeEnd:
+    if timezone.now() >= room.voteTime:
         print('runningx2')
         # eliminate the user with the most votes
         vote = []
@@ -588,97 +623,94 @@ def process_vote(request):
             room.msg = 'nobody got eliminated this round'
             room.save()
 
-        # check how many spy/civilian survive and update the room info
-        civilian_left = 0
-        mr_white_left = 0
-        spy_left = 0
-        # civilian = []
-        # mr_white = []
-        # spy = []
-        spy_word = None
-        civilian_word= None
-        players_alive = []
+    else:
+        while timezone.now() < room.voteTime:
+            time.sleep(1)
 
-        players = room.player.all()
-        for p in players:
-            name = str(p.player.first_name) + str(p.player.last_name)
-            print(p.__dict__)
-            if (p.identity == 'spy') and (not p.is_dead):
+    return dump_stats(request)
+
+
+@login_required
+@ensure_csrf_cookie
+def dump_stats(request):
+    player = Player.objects.get(player=request.user)
+    room = player.room
+    players = room.player.all()
+    response_json = []
+
+    # check how many spy/civilian survive and update the room info
+    civilian_left = 0
+    mr_white_left = 0
+    spy_left = 0
+    # civilian = []
+    # mr_white = []
+    # spy = []
+    spy_word = None
+    civilian_word = None
+    players_alive = []
+
+    players = room.player.all()
+    for p in players:
+        name = str(p.player.first_name) + str(p.player.last_name)
+        print(p.__dict__)
+        if p.identity == 'spy':
+            spy_word = p.word
+            if not p.is_dead:
                 players_alive.append(name)
                 spy_left += 1
-                # spy.append(p)
-                spy_word = p.word
-            if (p.identity == 'Mr.White') and (not p.is_dead):
-                players_alive.append(name)
-                mr_white_left += 1
-                # mr_white.append(p)
-            if (p.identity == 'civilian') and (p.is_dead == False):
+
+        if p.identity == 'civilian':
+            civilian_word = p.word
+            if not p.is_dead:
                 players_alive.append(name)
                 civilian_left += 1
-                civilian_word = p.word
-                # civilian.append(p)
 
-        print("spy left# ", spy_left)
-        print("Mr.White left# ", mr_white_left)
-        print("civilian left# ", civilian_left)
+        if (p.identity == 'Mr.White') and (not p.is_dead):
+            players_alive.append(name)
+            mr_white_left += 1
 
-        print("the number of mr_white_left ", mr_white_left)
-        print("the number of spy_left ", spy_left)
-        if mr_white_left + spy_left >= civilian_left:
-            room.game_end = True
-            room.winner = 'spy'
-            room.save()
-            print(66666666)
-        if mr_white_left + spy_left == 0:
-            room.game_end = True
-            room.winner = 'civilian'
-            room.save()
-            print(77777)
+    print("spy left# ", spy_left)
+    print("Mr.White left# ", mr_white_left)
+    print("civilian left# ", civilian_left)
 
-        print(room.game_end)
-        print('winner' + str(room.winner))
-
-        # if the game end, reset player info
-        response_data = []
-
-        for player in players:
-            myroom = {
-                'room_id': room.id,
-                'spy_word': spy_word,
-                'civilian_word': civilian_word,
-                'game_end': room.game_end,
-                'winner': room.winner,
-                'msg': room.msg,
-                'players_alive': players_alive,
-                'username': player.player.username,
-                'player_identity': player.identity,
-            }
-            response_data.append(myroom)
-        response_json = json.dumps(response_data)
-
-        # back to chat time
-        room.chat_time = True
-        room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
-        room.playerTurn = 0
+    print("the number of mr_white_left ", mr_white_left)
+    print("the number of spy_left ", spy_left)
+    if mr_white_left + spy_left >= civilian_left:
+        room.game_end = True
+        room.winner = 'spy'
         room.save()
+        print(66666666)
+    if mr_white_left + spy_left == 0:
+        room.game_end = True
+        room.winner = 'civilian'
+        room.save()
+        print(77777)
 
-        if room.game_end:
-            print('game end')
-            for p in players:
-                p.game_id = None
-                p.word = None
-                p.identity = None
-                p.is_dead = False
-                p.vote = None
-                p.save()
+    print(room.game_end)
+    print('winner' + str(room.winner))
 
-            # clear message in room after game end
-            for msg in room.message_set.all():
-                msg.content = None
-                msg.timestamp = None
-                msg.room = None
-                msg.player = None
-                msg.save()
+    # if the game end, reset player info
+    response_data = []
+
+    for player in players:
+        myroom = {
+            'room_id': room.id,
+            'spy_word': spy_word,
+            'civilian_word': civilian_word,
+            'game_end': room.game_end,
+            'winner': room.winner,
+            'msg': room.msg,
+            'players_alive': players_alive,
+            'username': player.player.username,
+            'player_identity': player.identity,
+        }
+        response_data.append(myroom)
+    response_json = json.dumps(response_data)
+
+    # back to display and then chat time
+    # time.sleep(10)
+    room.phase = 'display'
+    room.save()
 
     return HttpResponse(response_json, content_type='application/json')
 
@@ -759,7 +791,7 @@ def get_player(request):  # stop calling when room.ready == True! (We'll call ge
             'room_id': player.room.id,
             'username': player.player.username,
             'is_dead': player.is_dead,
-            'chat_time': room.chat_time,
+            'phase': room.phase,
         }
         response_data.append(players)
     response_json = json.dumps(response_data)

@@ -15,7 +15,7 @@ class Profile(models.Model):
 
 class Room(models.Model):
     capacity = models.IntegerField(default=3)
-    ready = models.BooleanField(default=False)
+    ready = models.BooleanField(null=True, blank=True, default=False)
     timeEnd = models.DateTimeField(null=True, blank=True, default=None)
     playerTurn = models.IntegerField(null=True, blank=True, default=None)
     phase = models.CharField(max_length=100, null=None, blank=None, default='')
@@ -38,15 +38,15 @@ class Player(models.Model):
     game_id = models.IntegerField(null=True, blank=True, default=None)
     word = models.CharField(max_length=50, null=True, blank=True, default=None)
     identity = models.CharField(max_length=50, null=True, blank=True, default=None)
-    is_dead = models.BooleanField(default=False)
+    is_dead = models.BooleanField(null=True, blank=True, default=False)
     vote = models.IntegerField(null=True, blank=True, default=None)
 
 
 class Message(models.Model):
-    player = models.ForeignKey(Player, default=None, on_delete=models.PROTECT, related_name="message")
-    content = models.CharField(max_length=1000, default=None)
-    timestamp = models.DateTimeField()
-    room = models.ForeignKey(Room, on_delete=models.PROTECT)
+    player = models.ForeignKey(Player, null=True, blank=True, default=None, on_delete=models.PROTECT, related_name="message")
+    content = models.CharField(null=True, blank=True, max_length=1000, default=None)
+    timestamp = models.DateTimeField(null=True, blank=True, default=None)
+    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.content
