@@ -680,12 +680,11 @@ def dump_stats(request):
         room.game_end = True
         room.winner = 'spy'
         room.save()
-        print(66666666)
+
     if mr_white_left + spy_left == 0:
         room.game_end = True
         room.winner = 'civilian'
         room.save()
-        print(77777)
 
     print(room.game_end)
     print('winner' + str(room.winner))

@@ -74,9 +74,9 @@ function displayGame(response) {
             $('#exit_room_button').prop('disabled', true);
 
             // chat time
-            if (this.phase == 'chat') {
-                console.log('chatting: ' + this.is_dead)
-                console.log('this.player_turn_username: ' + this.player_turn_username)
+            if (this.phase == 'chat'){
+                // console.log('chatting: ' + this.is_dead)
+                // console.log('this.player_turn_username: ' + this.player_turn_username)
                 $('#chat_block').show();
                 $('#vote').hide()
 
@@ -271,7 +271,7 @@ function updateMsg(response) {
 // }
 
 function getVote(player_id) {
-    console.log("voting...")
+    //console.log("voting...")
     $.ajax({
         url: "/findspy/get-vote",
         type: "POST",
@@ -286,7 +286,6 @@ function getVote(player_id) {
 function displayVote(response) {
 
     $('#message').html("");
-    console.log(response);
     $("#game-messages").html('<h5 id="game-messages">Voting End...</h5>');
 
     $(response).each(function () {
@@ -317,7 +316,6 @@ function displayVote(response) {
                             + 'The spy word is ' + this.spy_word
                             + '; The civilian word is ' + this.civilian_word);
                     } else {
-                        console.log(555555)
                         $('#message').html(this.msg + '<br><br>' + '<b>Game End!</b><br>'
                             + '<h5 class=" text-primary">' + ' You are a '
                             + this.player_identity + '. You Lose &#128557;</h5><br>'
