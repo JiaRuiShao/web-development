@@ -199,8 +199,10 @@ def update_game(request):
     response_data = []
     player = Player.objects.get(player=request.user)
     room = player.room
-    player_turn_id = room.playerTurn
     # print("game end: " + str(room.game_end == True))
+
+    # if player not in any room:
+
 
     # if room not ready
     if not room.ready:
@@ -216,24 +218,6 @@ def update_game(request):
 
     # if game end
     elif room.game_end == True:
-        # # reset player info
-        # for p in room.player.all():
-        #     p.game_id = None
-        #     p.word = None
-        #     p.identity = None
-        #     p.is_dead = False
-        #     p.vote = None
-        #     p.save()
-        #
-        # # reset room info
-        # room.ready = False
-        # room.playerTurn = 0
-        # room.game_end = True
-        # room.winner = None
-        # room.msg = None
-        # room.phase = ''
-        # room.save()
-
         # reset msg info
         for msg in room.message_set.all():
             msg.content = None
@@ -254,6 +238,7 @@ def update_game(request):
 
     # chatting, voting, and display
     else:
+        player_turn_id = room.playerTurn
         player_turn = Player.objects.get(game_id=player_turn_id, room_id=room.id)
         time_left = room.timeEnd - timezone.now()
         seconds_left = time_left.total_seconds()

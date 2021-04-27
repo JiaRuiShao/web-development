@@ -17,7 +17,7 @@ class Room(models.Model):
     capacity = models.IntegerField(default=3)
     ready = models.BooleanField(null=True, blank=True, default=False)
     timeEnd = models.DateTimeField(null=True, blank=True, default=None)
-    playerTurn = models.IntegerField(null=True, blank=True, default=None)
+    playerTurn = models.IntegerField(null=True, blank=True, default=0)
     phase = models.CharField(max_length=100, null=None, blank=None, default='')
     game_end = models.BooleanField(null=True, blank=True, default=False)
     winner = models.CharField(max_length=200, null=True, blank=True, default=None)
