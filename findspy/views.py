@@ -504,9 +504,8 @@ def send_msg(request):
         message = 'not valid room_id'
         return HttpResponse(status=404)
 
-    try:
-        room = get_object_or_404(Room, id=current_room_id)
-    except Exception:
+    room = get_object_or_404(Room, id=current_room_id)
+    if room == 404:
         message = 'not valid room_id'
         return HttpResponse(status=404)
 
@@ -634,7 +633,7 @@ def process_vote(request):
         if is_even: # if is even or most player didn't vote
             room.msg = 'nobody got eliminated this round'
             room.save()
-        elif most is None:
+        elif most is None: # if most player doesn't vote (vote for None)
             room.msg = 'nobody got eliminated this round'
             room.save()
         else: # if most player's vote are a valid player, eliminate him/her
