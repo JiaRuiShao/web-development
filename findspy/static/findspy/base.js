@@ -2,23 +2,6 @@ function changeProfile() {
     $(".change-profile:first").toggle()
 }
 
-// doesn't work b/c onload does not apply to div tag, has to be applied to body tag
-function userVisitCount() {
-    //console.log(Storage, localStorage.visitCount)
-    if (typeof (Storage) !== "undefined") {
-        if (localStorage.visitCount === "undefined" || localStorage.visitCount === "NaN") {
-            localStorage.visitCount = 0;
-        }
-        if (localStorage.visitCount <= 3) {
-            displayRule()
-        }
-        //console.log('current visit count: ', localStorage.visitCount)
-        localStorage.visitCount++;
-    } else {
-        displayRule()
-    }
-}
-
 function displayRule() {
     if (document.getElementById('game-intro') == null) {
         $("#game_rule_button").html('Close');
@@ -129,6 +112,7 @@ function displayGame(response) {
         // when game end or game not start
         else {
             $('#exit_room_button').attr('disabled', false);
+            $('#vote').hide()
         }
     })
 }
@@ -163,6 +147,7 @@ function displayGameInfo(response) {
                 $("#room_readiness").html(
                     '<span class = "text-capitalize"> Ready: &nbsp<span class=" text-success">' + this.room_ready +
                     '</span></span>');
+                $('#invite_friends').hide()
             }
             if (this.room_ready == false) {
                 $("#room_readiness").html(
@@ -251,24 +236,13 @@ function validateMsg(response) {
 function updateMsg(response) {
     $(response).each(function () {
         if (document.getElementById("msg_" + this.id) == null) {
-            $("#display_msg").append(
+            $("#display_msg").prepend(
                 '<p id="msg_' + this.id + '">' +' Name: ' + this.fname + ' ' + this.lname + ' Time: '
                 + this.timestamp + '<br><span class = "text-primary">' + this.content + '</span> ' + '</p><br>'
             )
         }
     })
 }
-
-// function startTiming(response) {
-//     var sec = 30
-//     var timer = setInterval(function() {
-//        $('#time span').text(sec--);
-//         if (sec < 0) {
-//           $('#time').fadeOut('fast');
-//           clearInterval(timer);
-//        }
-//     }, 1000);
-// }
 
 function getVote(player_id) {
     //console.log("voting...")
@@ -324,7 +298,9 @@ function displayVote(response) {
                     }
                 }
             } else {
-                $('#message').html(this.msg + '<br><br>');
+                if (this.msg != null) {
+                    $('#message').html(this.msg + '<br>');
+                }
             }
         }
     })
@@ -341,9 +317,12 @@ function displayResult() {
 
 function updateResult(response) {
     $(response).each(function () {
-       if (this.is_dead == true && this.username == myUserName) {
+       if (this.username == myUserName) {
            displayVote(response);
        }
+       $('#alive_users').html(
+           '<h5 class="text-success d-flex align-items-end flex-column"> Alive users: ' + this.players_alive + '</h5>'
+       )
     });
 }
 

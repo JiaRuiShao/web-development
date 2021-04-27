@@ -605,23 +605,40 @@ def process_vote(request):
     print('running')
 
     if timezone.now() >= room.voteTime:
-        print('runningx2')
         # eliminate the user with the most votes
         vote = []
 
         for p in players:
-            vote.append(p.vote)
-        try:
-            player_eliminate = get_object_or_404(Player, id=mode(vote))
+            if not p.is_dead:
+                vote.append(p.vote)
+            p.vote = None
+            p.save()
+
+        # check whether the most votes are even or None (majority of the players didn't vote)
+        is_even = True
+        previous_vote_count = vote.count(vote[0])
+        most_vote = 1
+        most = ''
+        for i in range(len(vote)):
+            if vote.count(vote[i]) > most_vote:
+                most_vote = vote.count(vote[i])
+                most = vote[i]
+            if previous_vote_count != vote.count(vote[i]):
+                is_even = False
+                break
+
+        # if is even or most player didn't vote
+        if is_even or most is None:
+            room.msg = 'nobody got eliminated this round'
+            room.save()
+
+        # valid number of votes
+        else:
+            player_eliminate = Player.objects.get(id=int(most))
             player_eliminate.is_dead = True
             player_eliminate.save()
             room.msg = 'player ' + player_eliminate.player.first_name + ' ' + \
                        player_eliminate.player.last_name + ' got eliminated this round'
-            room.save()
-            print(player_eliminate.__dict__)
-            print(room)
-        except StatisticsError:
-            room.msg = 'nobody got eliminated this round'
             room.save()
 
     else:
