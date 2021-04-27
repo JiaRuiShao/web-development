@@ -1,23 +1,18 @@
-import time
 import datetime
 import json
 import random
-from statistics import mode, StatisticsError
+import time
 
-from django.db import transaction
-from django.utils import timezone
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
-from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
-from findspy.models import *
-from findspy.forms import *
 from notifications.signals import notify
-from timeit import default_timer as timer
+
+from findspy.forms import *
 
 
 @login_required
@@ -36,6 +31,8 @@ def create_room(request):
         return render(request, 'findspy/home.html', context)
 
     new_room_capacity = 0
+
+    # validate the room capacity value
     try:
         if 'room_capacity' in request.POST and request.POST['room_capacity'].isnumeric():
             if (int(request.POST.get('room_capacity')) == 3
@@ -49,8 +46,8 @@ def create_room(request):
     current_profile = Profile.objects.get(user=request.user)
     friends = current_profile.following.all()
 
-    if player.room == None:
-        room = Room.objects.create(capacity=new_room_capacity, ready=False, phase='')
+    if player.room is None:  # create new room, and add this user to the room
+        room = Room.objects.create(capacity=new_room_capacity, ready=False, phase="")
         room.player.add(player)
         room.save()
         # player.room = room # add the room creator into the room
@@ -72,7 +69,8 @@ def exit_room(request):
         context['error'] = 'You must a valid room to exit.'
         return render(request, 'findspy/room.html', context)
 
-    if 'exit_room_id' not in request.POST:
+    # validate the room id value that passed in request.POST
+    if 'exit_room_id' not in request.POST or not request.POST['exit_room_id'].isnumeric():
         context['error'] = 'The room id is not valid'
         return render(request, 'findspy/room.html', context)
 
@@ -105,7 +103,7 @@ def exit_room(request):
         p.save()
 
     for msg in Message.objects.filter(room_id=room.id):
-        msg.delete() # clear all message related to the room
+        msg.delete()  # clear all message related to the room
 
     context['error'] = "You have just exit room " + room_id
 
@@ -207,17 +205,18 @@ def update_game(request):
     # if room not ready
     if not room.ready:
         for player in room.player.all():
-            players ={'room_ready': room.ready,
-                      'username': player.player.username,
-                      'game_end': room.game_end,
-                      }
-        response_data.append(players)
+            players = {
+                'room_ready': room.ready,
+                'username': player.player.username,
+                'game_end': room.game_end,
+            }
+            response_data.append(players)
         response_json = json.dumps(response_data)
-        #print(player_turn_id)
+
         return HttpResponse(response_json, content_type='application/json')
 
     # if game end
-    elif room.game_end == True:
+    elif room.game_end:
         # reset msg info
         for msg in room.message_set.all():
             msg.content = None
@@ -227,60 +226,62 @@ def update_game(request):
             msg.save()
 
         for player in room.player.all():
-            players = {'room_ready': room.ready,
-                       'username': player.player.username,
-                       'game_end': room.game_end,
-                       }
+            players = {
+                'room_ready': room.ready,
+                'username': player.player.username,
+                'game_end': room.game_end,
+            }
             response_data.append(players)
         response_json = json.dumps(response_data)
-        # print(player_turn_id)
+
         return HttpResponse(response_json, content_type='application/json')
 
     # chatting, voting, and display
     else:
         player_turn_id = room.playerTurn
+        # player_turn = room.player.get(game_id=player_turn_id)
         player_turn = Player.objects.get(game_id=player_turn_id, room_id=room.id)
         time_left = room.timeEnd - timezone.now()
         seconds_left = time_left.total_seconds()
 
         # chatting time
         if room.phase == 'chat':
-            # if next player is dead
+            # if this player is dead
             if player_turn.is_dead:
+                # if this player is the last one in the room, go voting
                 if room.playerTurn == (room.player.count() - 1):
-                    # voting (set timeEnd, set playerTurn to 0)
                     room.phase = 'vote'
                     room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.playerTurn = 0
                     room.save()
-                    #print('player dead, and last player: ' + str(room.timeEnd))
 
+                # if this player is not the last one, move on to next player
                 else:
                     room.playerTurn += 1
                     room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                     room.save()
-                    #print('player dead, and not last player: ' + str(room.timeEnd))
 
-            # next player not dead
+            # if this player is not dead
             else:
+                # if it's time to move to next player or move to vote phase
                 if room.timeEnd <= timezone.now():
                     if room.playerTurn == (room.player.count() - 1):
-                        # go voting
                         room.phase = 'vote'
                         room.save()
-                        #print('not dead player, last player: ' + str(room.timeEnd))
+
                     else:
                         room.playerTurn += 1
                         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
                         room.save()
-                        #print('not dead player, not last player: ' + str(room.timeEnd))
 
+        # display vote result
         if room.phase == 'display':
             room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
             room.playerTurn = 0
             room.phase = 'chat'
             room.save()
 
+        # dump all related information back
         for player in room.player.all():
             players = {
                 'username': player.player.username,
@@ -305,10 +306,13 @@ def update_game(request):
 @login_required
 def join_room(request):
     context = {}
+
+    # return error message if it's a GET request
     if request.method == 'GET':
         context['error'] = 'You need a POST request.'
         return render(request, 'findspy/home.html', context)
 
+    # validate the value that passed in request.POST as room id
     if 'room_search_id' not in request.POST or not request.POST['room_search_id'].isnumeric():
         context['error'] = 'The room id is not valid'
         return render(request, 'findspy/home.html', context)
@@ -321,6 +325,7 @@ def join_room(request):
         context['error'] = 'The room does not exist!'
         return render(request, 'findspy/home.html', context)
 
+    # if the room id is valid, get related info
     context['room'] = room
     context['players'] = room.player.all()
     context['profile'] = Profile.objects.get(user=request.user)
@@ -330,12 +335,14 @@ def join_room(request):
     friends = current_profile.following.all()
     context['friends'] = friends
 
+    # validate player and determine whether the game ready or not
     if player not in room.player.all():
         if room.capacity == 3 or room.capacity == 5:
             if player.room is None:
                 if room.capacity > room.player.count():
                     room.player.add(player)
-                    # player.room = room
+
+                    # clear the room fields and player fields when game ready
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.playerTurn = 0
@@ -403,15 +410,21 @@ def invite_friend(request):
     context['players'] = room.player.all()
     context['profile'] = Profile.objects.get(user=request.user)
 
-    invited_friend = User.objects.get(id=friend_id)
-    invited_player = Player.objects.get(player=invited_friend)
+    try:
+        invited_friend = User.objects.get(id=friend_id)
+    except Exception:
+        context['error'] = 'The friend user does not exist'
+        return render(request, 'findspy/room.html', context)
 
+    # get related info
+    invited_player = Player.objects.get(player=invited_friend)
     player = Player.objects.get(player=request.user)
     sender = User.objects.get(username=request.user)
     current_profile = Profile.objects.get(user=request.user)
     friends = current_profile.following.all()
     context['friends'] = friends
 
+    # validate invited user and determine whether the game ready or not
     if invited_player not in room.player.all():
         if room.capacity == 3 or room.capacity == 5:
             if invited_player.room is None:
@@ -424,7 +437,7 @@ def invite_friend(request):
                     notify.send(sender, recipient=invited_friend,
                                 verb=message, description=message)
 
-                    # player.room = room
+                    # clear room fields and player fields when game ready
                     if room.capacity == room.player.count():
                         room.ready = True
                         room.playerTurn = 0
@@ -435,8 +448,6 @@ def invite_friend(request):
                         room.msg = None
                         room.save()
 
-                        # print('When first join the room, room.timeEnd: ' + str(room.timeEnd))
-
                         for p in room.player.all():
                             p.game_id = None
                             p.word = None
@@ -445,9 +456,8 @@ def invite_friend(request):
                             p.vote = None
                             p.save()
 
-                        #print('When first invite friends the room, room.timeEnd: ' + str(room.timeEnd))
-                        assign_player_id_words(request,
-                                               room)  # assign words and play id for each user in the room
+                        # print('When first invite friends the room, room.timeEnd: ' + str(room.timeEnd))
+                        assign_player_id_words(request, room)  # assign words and play id for each user in the room
 
                     context['players'] = room.player.all()
                     return render(request, 'findspy/room.html', context)
@@ -467,7 +477,7 @@ def invite_friend(request):
 
 
 @login_required
-def user_mark_all_read(request):
+def user_mark_all_read(request):  # mark all ready when user click the notification msg
     user = request.user
     notifies = user.notifications.all()
     notifies.mark_all_as_read()
@@ -477,6 +487,7 @@ def user_mark_all_read(request):
 @login_required
 @ensure_csrf_cookie
 def send_msg(request):
+    # validate user and msg info
     if not request.user.id:
         return _my_json_error_response("You must be logged in to do this operation", status=404)
     if request.method != 'POST':
@@ -492,35 +503,39 @@ def send_msg(request):
     if not current_room_id.isdigit():
         message = 'not valid room_id'
         return HttpResponse(status=404)
-    room = get_object_or_404(Room, id=current_room_id)
+
+    try:
+        room = get_object_or_404(Room, id=current_room_id)
+    except Exception:
+        message = 'not valid room_id'
+        return HttpResponse(status=404)
 
     new_msg = Message(player=player, content=content,
-                      timestamp=datetime.datetime.now(), room=room)
+                      timestamp=timezone.now(), room=room)
     new_msg.save()
 
     room = player.room
     player_turn_id = room.playerTurn
 
+    # when click send_msg button in room.html, directly move on to next player/phase(voting)
     if room.playerTurn == (room.player.count() - 1):
         room.phase = 'vote'
-        # voting (set timeEnd, set playerTurn to 0)
         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
         room.playerTurn = 0
         room.save()
-        #print('sending message, last player : ' + str(room.timeEnd))
+
     else:
         print(room.playerTurn)
         room.playerTurn += 1
         room.timeEnd = timezone.now() + datetime.timedelta(seconds=30)
         room.save()
-        #print('sending message, player: ' + str(room.timeEnd))
 
     return get_msg(request)
 
 
 @login_required
 @ensure_csrf_cookie
-def get_msg(request):
+def get_msg(request):  # dump msg info back
     if not request.user.id:
         return _my_json_error_response("You must be logged in to do this operation", status=404)
 
@@ -568,14 +583,12 @@ def get_vote(request):
     player.vote = int(request.POST['vote'])
     player.save()
 
-    # wait for the others to vote
-    # while room.player.filter(vote=None).count() > 0:
-    #     time.sleep(1)
-
+    # save the voteTime as 10 sec after the last time any player vote
     room = Room.objects.get(id=room_id)
     room.voteTime = timezone.now() + datetime.timedelta(seconds=10)
     room.save()
 
+    # sleep for 10 sec to wait for another player vote (if there's any)
     time.sleep(10)
 
     return process_vote(request)
@@ -587,14 +600,15 @@ def process_vote(request):
     player = Player.objects.get(player=request.user)
     room = player.room
     players = room.player.all()
-    print('running')
 
+    # if voteTime end, eliminate the player who got the majority vote (if there's any)
     if timezone.now() >= room.voteTime:
         # eliminate the user with the most votes
         vote = []
 
         for p in players:
             if not p.is_dead:
+                print(p.player.first_name, p.player.last_name, p.vote)
                 vote.append(p.vote)
             p.vote = None
             p.save()
@@ -604,21 +618,26 @@ def process_vote(request):
         previous_vote_count = vote.count(vote[0])
         most_vote = 1
         most = ''
-        for i in range(len(vote)):
-            if vote.count(vote[i]) > most_vote:
-                most_vote = vote.count(vote[i])
-                most = vote[i]
-            if previous_vote_count != vote.count(vote[i]):
-                is_even = False
-                break
 
-        # if is even or most player didn't vote
-        if is_even or most is None:
+        if len(set(vote)) == 1: # if all player vote for the same player
+            most = vote[0]
+            is_even = False
+        else:
+            for i in range(len(vote)):
+                if vote.count(vote[i]) > most_vote:
+                    most_vote = vote.count(vote[i])
+                    most = vote[i]
+                if previous_vote_count != vote.count(vote[i]):
+                    is_even = False
+                    break
+
+        if is_even: # if is even or most player didn't vote
             room.msg = 'nobody got eliminated this round'
             room.save()
-
-        # valid number of votes
-        else:
+        elif most is None:
+            room.msg = 'nobody got eliminated this round'
+            room.save()
+        else: # if most player's vote are a valid player, eliminate him/her
             player_eliminate = Player.objects.get(id=int(most))
             player_eliminate.is_dead = True
             player_eliminate.save()
@@ -626,6 +645,7 @@ def process_vote(request):
                        player_eliminate.player.last_name + ' got eliminated this round'
             room.save()
 
+    # wait for the end of the voteTime
     else:
         while timezone.now() < room.voteTime:
             time.sleep(1)
@@ -645,9 +665,6 @@ def dump_stats(request):
     civilian_left = 0
     mr_white_left = 0
     spy_left = 0
-    # civilian = []
-    # mr_white = []
-    # spy = []
     spy_word = None
     civilian_word = None
     players_alive = []
@@ -655,7 +672,6 @@ def dump_stats(request):
     players = room.player.all()
     for p in players:
         name = str(p.player.first_name) + str(p.player.last_name)
-        print(p.__dict__)
         if p.identity == 'spy':
             spy_word = p.word
             if not p.is_dead:
@@ -672,12 +688,6 @@ def dump_stats(request):
             players_alive.append(name)
             mr_white_left += 1
 
-    print("spy left# ", spy_left)
-    print("Mr.White left# ", mr_white_left)
-    print("civilian left# ", civilian_left)
-
-    print("the number of mr_white_left ", mr_white_left)
-    print("the number of spy_left ", spy_left)
     if mr_white_left + spy_left >= civilian_left:
         room.game_end = True
         room.winner = 'spy'
@@ -687,9 +697,6 @@ def dump_stats(request):
         room.game_end = True
         room.winner = 'civilian'
         room.save()
-
-    print(room.game_end)
-    print('winner' + str(room.winner))
 
     # if the game end, reset player info
     response_data = []
@@ -711,7 +718,6 @@ def dump_stats(request):
     response_json = json.dumps(response_data)
 
     # back to display and then chat time
-    # time.sleep(10)
     room.phase = 'display'
     room.save()
 
@@ -721,9 +727,14 @@ def dump_stats(request):
 @login_required
 @ensure_csrf_cookie
 def dump_result(request):
-
+    # updating voting result especially for the player is dead or the player did not vote in this round
     player = Player.objects.get(player=request.user)
     room = player.room
+
+    # if player not in any room:
+    if room is None:
+        return redirect(reverse('home'))
+
     players = room.player.all()
     response_json = []
 
@@ -731,9 +742,6 @@ def dump_result(request):
     civilian_left = 0
     mr_white_left = 0
     spy_left = 0
-    # civilian = []
-    # mr_white = []
-    # spy = []
     spy_word = None
     civilian_word = None
     players_alive = []
@@ -741,7 +749,6 @@ def dump_result(request):
     players = room.player.all()
     for p in players:
         name = str(p.player.first_name) + str(p.player.last_name)
-        print(p.__dict__)
         if p.identity == 'spy':
             spy_word = p.word
             if not p.is_dead:
@@ -784,9 +791,10 @@ def dump_result(request):
 @login_required
 def view_profile(request, user_id):
     profile = Profile.objects.get(user__id=user_id)
-    context = {'page_name': 'Profile',
-               'profile': profile,
-               }
+    context = {
+        'page_name': 'Profile',
+        'profile': profile,
+    }
 
     # for viewing and editing my profile
     if user_id == request.user.id:
@@ -836,7 +844,7 @@ def get_photo(request, profile_id):
 
 @login_required
 @ensure_csrf_cookie
-def get_player(request):  # stop calling when room.ready == True! (We'll call get_msg instead)
+def get_player(request):
     # if not user
     if not request.user.id:
         return _my_json_error_response("You must be logged in to do this operation", status=403)
