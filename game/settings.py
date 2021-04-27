@@ -6,9 +6,10 @@ from configparser import ConfigParser
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # security key set-up
-CONFIG = ConfigParser()
-CONFIG.read(os.path.join(BASE_DIR, 'config.ini'))
-SECRET_KEY = CONFIG.get('Django', 'Secret')
+# CONFIG = ConfigParser()
+# CONFIG.read(os.path.join(BASE_DIR, 'config.ini'))
+# SECRET_KEY = CONFIG.get('Django', 'Secret')
+SECRET_KEY = 'z)@j-rl@o6n=ejj3z8ec4@gfsrs-xz(f$0p-srx)_msst9ft5@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
